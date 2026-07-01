@@ -9,10 +9,25 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const RESULTS_DIR = path.join(__dirname, 'results');
+const CBT_DIR = path.join(RESULTS_DIR, 'cbt');
 
-// Make sure the results folder exists
+// Make sure the results folders exist
 if (!fs.existsSync(RESULTS_DIR)) {
   fs.mkdirSync(RESULTS_DIR, { recursive: true });
+}
+if (!fs.existsSync(CBT_DIR)) {
+  fs.mkdirSync(CBT_DIR, { recursive: true });
+}
+
+// Filename safety for CBT thought records: only our generated pattern, no path separators.
+const CBT_SAFE_FILENAME = /^thought-record-[0-9A-Za-z\-]+\.json$/;
+
+function cbtSummarize(record) {
+  const candidates = [record.situation, record.automaticThought, record.adaptiveResponse];
+  const first = candidates.find((v) => v && String(v).trim());
+  const text = first ? String(first).trim() : '(no description)';
+  const oneLine = text.replace(/\s+/g, ' ');
+  return oneLine.length > 140 ? oneLine.slice(0, 137) + '…' : oneLine;
 }
 
 // Serve minified production assets from dist/ if they've been built
@@ -116,7 +131,81 @@ app.get('/api/results/:id', (req, res) => {
   }
 });
 
+// Save a completed CBT thought record as a JSON file in ./results/cbt/
+app.post('/api/cbt/submit', (req, res) => {
+  try {
+    const body = req.body || {};
+    const safeStamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `thought-record-${safeStamp}.json`;
+    const filePath = path.join(CBT_DIR, filename);
+    const record = { savedAt: new Date().toISOString(), ...body };
+
+    fs.writeFileSync(filePath, JSON.stringify(record, null, 2), 'utf8');
+    res.json({ ok: true, filename, path: filePath });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, error: 'Failed to save record' });
+  }
+});
+
+// List past CBT thought records sorted newest first.
+app.get('/api/cbt/entries', (_req, res) => {
+  try {
+    const files = fs
+      .readdirSync(CBT_DIR)
+      .filter((f) => CBT_SAFE_FILENAME.test(f));
+
+    const entries = files
+      .map((filename) => {
+        try {
+          const record = JSON.parse(fs.readFileSync(path.join(CBT_DIR, filename), 'utf8'));
+          return {
+            filename,
+            savedAt: record.savedAt || null,
+            datetime: record.datetime || null,
+            summary: cbtSummarize(record),
+            emotion: record.emotion || null,
+            emotionIntensity: typeof record.emotionIntensity === 'number' ? record.emotionIntensity : null
+          };
+        } catch (e) {
+          return null;
+        }
+      })
+      .filter(Boolean)
+      .sort((a, b) => {
+        const ad = a.savedAt || a.filename;
+        const bd = b.savedAt || b.filename;
+        return ad < bd ? 1 : ad > bd ? -1 : 0;
+      });
+
+    res.json({ ok: true, entries });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, error: 'Failed to read entries' });
+  }
+});
+
+// Get a single CBT thought record's full JSON.
+app.get('/api/cbt/entries/:filename', (req, res) => {
+  try {
+    const filename = req.params.filename;
+    if (!CBT_SAFE_FILENAME.test(filename)) {
+      return res.status(400).json({ ok: false, error: 'Invalid filename' });
+    }
+    const filePath = path.join(CBT_DIR, filename);
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ ok: false, error: 'Not found' });
+    }
+    const record = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    res.json({ ok: true, filename, record });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, error: 'Failed to read entry' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`BDI-II app running at http://localhost:${PORT}`);
   console.log(`Results saved to: ${RESULTS_DIR}`);
+  console.log(`CBT thought records saved to: ${CBT_DIR}`);
 });

@@ -1,14 +1,18 @@
-# BDI-II Inventory (local)
+# Self-care tools (local)
 
-A small local web app that walks you through a Beck Depression Inventory (BDI-II) self-report and saves each result as a JSON file on your computer.
+A small local web app bundling two self-report tools:
 
-It is meant to be run on your own machine — there is no auth, no analytics, no external services. Results never leave your filesystem.
+- **BDI-II Inventory** — a Beck Depression Inventory (BDI-II) self-report.
+- **CBT Thought Record** — a guided 14-step cognitive-behavioral therapy exercise.
+
+Both save each result as a JSON file on your computer. It is meant to be run on your own machine — there is no auth, no analytics, no external services. Results never leave your filesystem.
 
 ## Stack
 
-- Node.js + Express (single dependency)
+- Node.js + Express (single dependency), one server serving both tools
 - Plain HTML/CSS/JS in `public/`
-- Results saved to `./results/*.json`
+- BDI-II results saved to `./results/*.json`
+- CBT thought records saved to `./results/cbt/*.json`
 
 ## Prerequisites
 
@@ -28,10 +32,12 @@ To stop the server, press `Ctrl+C` in the terminal.
 
 ## How it works
 
-- The landing page (`/`) has two buttons: **Start a new test** and **View past results**.
+- The landing page (`/`) links to both tools: start a new BDI-II test or thought record, or view past results for either.
 - The quiz (`/quiz.html`) shows one item at a time. Pick the answer that fits, click **Next**, and so on. The last button is **Submit**.
 - On submit, the browser POSTs the answers to `/api/results`, the server writes a timestamped JSON file into `results/`, and the score + severity are shown on screen.
 - The results page (`/results.html`) reads everything from `results/` via `/api/results`, plots a line chart of total scores over time with severity bands shaded behind, and lists every past result with a link to start a new test.
+- The thought record (`/cbt.html`) is a single page that walks through 14 steps, an entry list, and an entry detail view, all client-side. Linking to `/cbt.html#list` opens straight to the past-entries list.
+- On save, the browser POSTs to `/api/cbt/submit`, the server writes a timestamped JSON file into `results/cbt/`. Past entries are read via `/api/cbt/entries` and `/api/cbt/entries/<filename>`.
 
 ## Notes on the inventory
 
@@ -52,14 +58,16 @@ To stop the server, press `Ctrl+C` in the terminal.
 ```
 bdi2-app/
 ├── package.json
-├── server.js              # Express server + JSON save/list APIs
+├── server.js              # Express server + JSON save/list APIs for both tools
 ├── README.md
-├── results/               # one JSON file per submission (created on demand)
+├── results/               # one JSON file per BDI-II submission (created on demand)
+│   └── cbt/               # one JSON file per CBT thought record (created on demand)
 └── public/
-    ├── index.html         # landing page
+    ├── index.html         # landing page, links to both tools
     ├── quiz.html          # the BDI-II questionnaire
-    ├── results.html       # past-results index with chart
+    ├── results.html       # past BDI-II results index with chart
     ├── questions.js       # questions + severity bands
+    ├── cbt.html           # CBT thought record (quiz + entry list + entry detail)
     └── style.css
 ```
 

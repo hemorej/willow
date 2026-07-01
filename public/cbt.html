@@ -1,0 +1,1263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CBT Thought Record</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" />
+<style>
+  :root {
+    --bg: #f6f3ee;
+    --card: #ffffff;
+    --ink: #2b2a2a;
+    --ink-soft: #5a5754;
+    --accent: #5b7e8f;
+    --accent-soft: #e3ecf0;
+    --border: #e6e1d8;
+    --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.04);
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+  }
+
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .title-block { min-width: 0; }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.01em;
+  }
+
+  .subtitle {
+    color: var(--ink-soft);
+    font-size: 14px;
+    margin: 0;
+  }
+
+  .header-action {
+    flex-shrink: 0;
+  }
+
+  .text-link {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--accent);
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    font-family: inherit;
+  }
+
+  .text-link:hover {
+    text-decoration: underline;
+  }
+
+  .progress {
+    margin: 20px 0 28px;
+  }
+
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 240ms ease;
+  }
+
+  .progress-label {
+    color: var(--ink-soft);
+    font-size: 13px;
+    margin-top: 8px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 28px 24px;
+    box-shadow: var(--shadow);
+  }
+
+  .step-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 6px 0;
+  }
+
+  .step-help {
+    color: var(--ink-soft);
+    font-size: 14px;
+    margin: 0 0 18px 0;
+  }
+
+  label.field-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin: 16px 0 6px;
+    color: var(--ink);
+  }
+
+  textarea, input[type="text"], input[type="datetime-local"] {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--ink);
+    background: #fff;
+    resize: vertical;
+  }
+
+  textarea {
+    min-height: 96px;
+  }
+
+  textarea:focus, input[type="text"]:focus, input[type="datetime-local"]:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+    border-color: var(--accent);
+  }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 4px;
+  }
+
+  input[type="range"] {
+    flex: 1;
+    accent-color: var(--accent);
+  }
+
+  .slider-value {
+    min-width: 48px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-soft);
+    font-size: 14px;
+  }
+
+  .distortions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  .distortion {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    background: #fff;
+    transition: background 120ms ease, border-color 120ms ease;
+  }
+
+  .distortion:hover {
+    background: var(--accent-soft);
+  }
+
+  .distortion input {
+    margin-top: 3px;
+    accent-color: var(--accent);
+  }
+
+  .distortion.checked {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .distortion-name {
+    font-weight: 500;
+    font-size: 14px;
+  }
+
+  .distortion-desc {
+    color: var(--ink-soft);
+    font-size: 13px;
+    margin-top: 2px;
+  }
+
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-top: 24px;
+  }
+
+  .nav-right {
+    display: flex;
+    gap: 8px;
+  }
+
+  button {
+    font-family: inherit;
+    font-size: 14px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--ink);
+    cursor: pointer;
+    transition: background 120ms ease, border-color 120ms ease;
+  }
+
+  button:hover {
+    background: var(--accent-soft);
+  }
+
+  button.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  button.primary:hover {
+    background: #4a6c7d;
+  }
+
+  button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .review {
+    margin-top: 8px;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+  }
+
+  .review h3 {
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin: 16px 0 4px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .review p {
+    margin: 0 0 4px 0;
+    font-size: 15px;
+    white-space: pre-wrap;
+  }
+
+  .review .empty {
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+
+  .review ul {
+    margin: 4px 0 0 18px;
+    padding: 0;
+  }
+
+  .saved {
+    text-align: center;
+    padding: 30px 20px;
+  }
+
+  .saved-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 28px;
+  }
+
+  .saved h2 {
+    margin: 0 0 8px;
+    font-size: 20px;
+  }
+
+  .saved code {
+    background: var(--accent-soft);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--accent);
+  }
+
+  .saved-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+
+  .error {
+    color: #b54040;
+    background: #fbeaea;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-top: 12px;
+  }
+
+  /* Index list */
+  .entry-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 4px 0 0;
+  }
+
+  .entry-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: background 120ms ease, border-color 120ms ease;
+    font-family: inherit;
+    color: var(--ink);
+  }
+
+  .entry-item:hover {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+  }
+
+  .entry-date {
+    font-size: 12px;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .entry-summary {
+    font-size: 15px;
+    line-height: 1.45;
+    margin-bottom: 4px;
+  }
+
+  .entry-emotion {
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  .entry-empty {
+    text-align: center;
+    color: var(--ink-soft);
+    padding: 24px 0;
+    font-size: 14px;
+  }
+
+  /* Entry detail */
+  .entry-meta {
+    color: var(--ink-soft);
+    font-size: 14px;
+    margin: 0 0 18px;
+  }
+
+  .entry-section {
+    margin-bottom: 14px;
+  }
+
+  .entry-section h3 {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: 0 0 4px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .entry-section p {
+    margin: 0;
+    font-size: 15px;
+    white-space: pre-wrap;
+  }
+
+  .entry-section .empty {
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+
+  .entry-section ul {
+    margin: 4px 0 0 18px;
+    padding: 0;
+    font-size: 15px;
+  }
+
+  .pill {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-left: 6px;
+  }
+
+  .skeleton {
+    color: var(--ink-soft);
+    text-align: center;
+    padding: 24px 0;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header id="header"></header>
+  <div id="progress" class="progress" style="display:none">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel"></div>
+  </div>
+  <div class="card" id="card"></div>
+</div>
+
+<script>
+// ---------------------------------------------------------------------------
+// Cognitive distortions (Therapist Aid worksheet)
+// ---------------------------------------------------------------------------
+const DISTORTIONS = [
+  { name: "Magnification & minimization", desc: "Exaggerating or minimizing the importance of events. Your achievements feel unimportant; your mistakes feel huge." },
+  { name: "Catastrophizing", desc: "Seeing only the worst possible outcomes of a situation." },
+  { name: "Overgeneralization", desc: "Making broad interpretations from a single or few events. “I felt awkward in that interview. I am always so awkward.”" },
+  { name: "Magical thinking", desc: "The belief that thoughts, actions, or emotions influence unrelated situations." },
+  { name: "Personalization", desc: "Believing you are responsible for events outside of your control." },
+  { name: "Jumping to conclusions", desc: "Interpreting the meaning of a situation with little or no evidence." },
+  { name: "Mind reading", desc: "Interpreting the thoughts and beliefs of others without adequate evidence." },
+  { name: "Fortune telling", desc: "Expecting that a situation will turn out badly without adequate evidence." },
+  { name: "Emotional reasoning", desc: "Assuming emotions reflect the way things really are. “I feel like a bad friend, therefore I must be one.”" },
+  { name: "Disqualifying the positive", desc: "Focusing on the negative while ignoring the positive parts of a situation." },
+  { name: "“Should” statements", desc: "Believing things should be a certain way. “I should always be perfect.”" },
+  { name: "All-or-nothing thinking", desc: "Thinking in absolutes such as “always,” “never,” or “every.”" },
+];
+
+// ---------------------------------------------------------------------------
+// Steps
+// ---------------------------------------------------------------------------
+const STEPS = [
+  {
+    key: "datetime",
+    title: "When is this happening?",
+    help: "We'll stamp the record with this date and time.",
+    fields: [{ key: "datetime", type: "datetime-local", label: "Date and time" }],
+  },
+  {
+    key: "situation",
+    title: "What's the situation?",
+    help: "What event, unhelpful behavior, or unpleasant emotion is this connected to? It can be external (something that happened or that you did) or internal (an emotion, sensation, image, daydream, or stream of thoughts).",
+    fields: [{ key: "situation", type: "textarea", label: "Describe the situation" }],
+  },
+  {
+    key: "automaticThought",
+    title: "What went through your mind?",
+    help: "When you noticed your mood shift, what thought or image came up? Write it as it appeared, even if it doesn't sound rational.",
+    fields: [
+      { key: "automaticThought", type: "textarea", label: "Automatic thought(s) or image(s)" },
+      { key: "thoughtBelief", type: "slider", label: "How much do you believe this thought right now?", min: 0, max: 100, suffix: "%", default: 50 },
+    ],
+  },
+  {
+    key: "emotion",
+    title: "What are you feeling?",
+    help: "Name the emotion (sad, anxious, angry, ashamed, hopeless, etc.). Use one word per emotion if you can.",
+    fields: [
+      { key: "emotion", type: "text", label: "Emotion(s)" },
+      { key: "emotionIntensity", type: "slider", label: "How intense is the emotion?", min: 0, max: 100, suffix: "%", default: 50 },
+    ],
+  },
+  {
+    key: "distortions",
+    title: "Any cognitive distortions at play?",
+    help: "Pick any that fit the automatic thought above. More than one can apply. It's okay to skip if none feel right.",
+    fields: [{ key: "distortions", type: "distortions" }],
+  },
+  {
+    key: "evidenceFor",
+    title: "Evidence the thought is true",
+    help: "What facts support the automatic thought? Stick to evidence, not feelings or interpretations.",
+    fields: [{ key: "evidenceFor", type: "textarea", label: "Evidence supporting the thought" }],
+  },
+  {
+    key: "evidenceAgainst",
+    title: "Evidence the thought is not true",
+    help: "What facts contradict the automatic thought, or show it isn't 100% accurate?",
+    fields: [{ key: "evidenceAgainst", type: "textarea", label: "Evidence against the thought" }],
+  },
+  {
+    key: "alternative",
+    title: "Is there another way to look at this?",
+    help: "What's an alternative explanation, or a different angle on the situation?",
+    fields: [{ key: "alternative", type: "textarea", label: "Alternative explanation" }],
+  },
+  {
+    key: "coping",
+    title: "If the worst happened — what then?",
+    help: "If the worst case actually came true, how could you cope? What's the best that could happen? What's the most realistic outcome?",
+    fields: [{ key: "coping", type: "textarea", label: "Worst case, best case, most realistic" }],
+  },
+  {
+    key: "effect",
+    title: "What does believing this thought cost you?",
+    help: "What's the effect of believing the automatic thought? What might change if you believed something different?",
+    fields: [{ key: "effect", type: "textarea", label: "Effect of believing vs. changing the thought" }],
+  },
+  {
+    key: "friend",
+    title: "What would you tell a friend?",
+    help: "If someone you cared about was in this exact situation and had this same thought, what would you say to them?",
+    fields: [{ key: "friend", type: "textarea", label: "What you'd tell a friend" }],
+  },
+  {
+    key: "adaptive",
+    title: "A more balanced response",
+    help: "Using the answers above, write a response to the automatic thought that feels more accurate or balanced.",
+    fields: [
+      { key: "adaptiveResponse", type: "textarea", label: "Adaptive / balanced response" },
+      { key: "adaptiveBelief", type: "slider", label: "How much do you believe this new response?", min: 0, max: 100, suffix: "%", default: 50 },
+    ],
+  },
+  {
+    key: "outcome",
+    title: "How do you feel now?",
+    help: "Re-rate the automatic thought and the emotion now that you've worked through it.",
+    fields: [
+      { key: "outcomeBelief", type: "slider", label: "How much do you believe the original thought now?", min: 0, max: 100, suffix: "%", default: 50 },
+      { key: "outcomeIntensity", type: "slider", label: "How intense is the emotion now?", min: 0, max: 100, suffix: "%", default: 50 },
+      { key: "nextAction", type: "textarea", label: "What would be good to do next?" },
+    ],
+  },
+  {
+    key: "review",
+    title: "Review and save",
+    help: "Take a quick look. When you're ready, click Save to write the record to disk.",
+    review: true,
+  },
+];
+
+// Section structure for the entry detail view (key, label, kind).
+const ENTRY_SECTIONS = [
+  { key: "situation", label: "Situation" },
+  { kind: "thoughtCombo", label: "Automatic thought" },
+  { kind: "emotionCombo", label: "Emotion" },
+  { key: "distortions", label: "Cognitive distortions", kind: "list" },
+  { key: "evidenceFor", label: "Evidence the thought is true" },
+  { key: "evidenceAgainst", label: "Evidence the thought is not true" },
+  { key: "alternative", label: "Alternative explanation" },
+  { key: "coping", label: "Coping (worst / best / realistic)" },
+  { key: "effect", label: "Effect of believing vs. changing the thought" },
+  { key: "friend", label: "What you'd tell a friend" },
+  { kind: "adaptiveCombo", label: "Adaptive response" },
+  { kind: "outcomeCombo", label: "Outcome" },
+];
+
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
+function localISOForInput(d) {
+  const pad = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function freshAnswers() {
+  return {
+    datetime: localISOForInput(new Date()),
+    situation: "", automaticThought: "", thoughtBelief: 50,
+    emotion: "", emotionIntensity: 50, distortions: [],
+    evidenceFor: "", evidenceAgainst: "", alternative: "",
+    coping: "", effect: "", friend: "",
+    adaptiveResponse: "", adaptiveBelief: 50,
+    outcomeBelief: 50, outcomeIntensity: 50, nextAction: "",
+  };
+}
+
+const state = {
+  view: "quiz", // "quiz" | "list" | "entry"
+  stepIndex: 0,
+  saved: null,
+  saveError: null,
+  answers: freshAnswers(),
+  entries: null,
+  entriesLoading: false,
+  entriesError: null,
+  currentEntry: null,
+  entryLoading: false,
+  entryError: null,
+};
+
+// ---------------------------------------------------------------------------
+// Routing helpers
+// ---------------------------------------------------------------------------
+function goToQuiz() {
+  state.view = "quiz";
+  state.stepIndex = 0;
+  state.saved = null;
+  state.saveError = null;
+  state.answers = freshAnswers();
+  state.currentEntry = null;
+  state.entryError = null;
+  render();
+}
+
+function goToList() {
+  state.view = "list";
+  state.entriesLoading = true;
+  state.entriesError = null;
+  render();
+  fetch("/api/cbt/entries")
+    .then(r => r.json())
+    .then(data => {
+      if (!data.ok) throw new Error(data.error || "Failed to load");
+      state.entries = data.entries;
+      state.entriesLoading = false;
+      render();
+    })
+    .catch(e => {
+      state.entriesError = e.message;
+      state.entriesLoading = false;
+      render();
+    });
+}
+
+function goToEntry(filename) {
+  state.view = "entry";
+  state.entryLoading = true;
+  state.entryError = null;
+  state.currentEntry = null;
+  render();
+  fetch("/api/cbt/entries/" + encodeURIComponent(filename))
+    .then(r => r.json())
+    .then(data => {
+      if (!data.ok) throw new Error(data.error || "Failed to load");
+      state.currentEntry = { filename: data.filename, record: data.record };
+      state.entryLoading = false;
+      render();
+    })
+    .catch(e => {
+      state.entryError = e.message;
+      state.entryLoading = false;
+      render();
+    });
+}
+
+// ---------------------------------------------------------------------------
+// Formatting helpers
+// ---------------------------------------------------------------------------
+function formatDate(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleString(undefined, {
+    weekday: "short", year: "numeric", month: "short", day: "numeric",
+    hour: "numeric", minute: "2-digit",
+  });
+}
+
+function nonEmpty(value) {
+  if (Array.isArray(value)) return value.length > 0;
+  return value != null && String(value).trim() !== "";
+}
+
+// ---------------------------------------------------------------------------
+// Header rendering (per view)
+// ---------------------------------------------------------------------------
+const headerEl = document.getElementById("header");
+const card = document.getElementById("card");
+const progressEl = document.getElementById("progress");
+const progressFill = document.getElementById("progressFill");
+const progressLabel = document.getElementById("progressLabel");
+
+function renderHeader() {
+  headerEl.innerHTML = "";
+  const titleBlock = document.createElement("div");
+  titleBlock.className = "title-block";
+  const home = document.createElement("a");
+  home.className = "text-link";
+  home.href = "/";
+  home.textContent = "← Home";
+  home.style.display = "inline-block";
+  home.style.marginBottom = "6px";
+  const h1 = document.createElement("h1");
+  h1.textContent = "Thought Record";
+
+  const sub = document.createElement("p");
+  sub.className = "subtitle";
+
+  if (state.view === "quiz") {
+    sub.textContent = "A short CBT exercise. Spend 5–10 minutes. Not every prompt will apply — leave any field blank if it doesn't fit.";
+  } else if (state.view === "list") {
+    sub.textContent = "Your past thought records, newest first.";
+  } else {
+    sub.textContent = "Saved thought record.";
+  }
+
+  titleBlock.appendChild(home);
+  titleBlock.appendChild(h1);
+  titleBlock.appendChild(sub);
+
+  const action = document.createElement("div");
+  action.className = "header-action";
+
+  if (state.view === "quiz") {
+    const link = document.createElement("button");
+    link.className = "text-link";
+    link.textContent = "View past entries →";
+    link.addEventListener("click", goToList);
+    action.appendChild(link);
+  } else {
+    const back = document.createElement("button");
+    back.textContent = "Back to start";
+    back.addEventListener("click", goToQuiz);
+    action.appendChild(back);
+  }
+
+  headerEl.appendChild(titleBlock);
+  headerEl.appendChild(action);
+}
+
+// ---------------------------------------------------------------------------
+// Quiz field rendering (unchanged from v1)
+// ---------------------------------------------------------------------------
+function renderField(field) {
+  if (field.type === "textarea") {
+    const ta = document.createElement("textarea");
+    ta.value = state.answers[field.key] || "";
+    ta.addEventListener("input", e => { state.answers[field.key] = e.target.value; });
+    const label = document.createElement("label");
+    label.className = "field-label";
+    label.textContent = field.label;
+    const wrap = document.createElement("div");
+    wrap.appendChild(label);
+    wrap.appendChild(ta);
+    return wrap;
+  }
+  if (field.type === "text") {
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = state.answers[field.key] || "";
+    input.addEventListener("input", e => { state.answers[field.key] = e.target.value; });
+    const label = document.createElement("label");
+    label.className = "field-label";
+    label.textContent = field.label;
+    const wrap = document.createElement("div");
+    wrap.appendChild(label);
+    wrap.appendChild(input);
+    return wrap;
+  }
+  if (field.type === "datetime-local") {
+    const input = document.createElement("input");
+    input.type = "datetime-local";
+    input.value = state.answers[field.key] || "";
+    input.addEventListener("input", e => { state.answers[field.key] = e.target.value; });
+    const label = document.createElement("label");
+    label.className = "field-label";
+    label.textContent = field.label;
+    const wrap = document.createElement("div");
+    wrap.appendChild(label);
+    wrap.appendChild(input);
+    return wrap;
+  }
+  if (field.type === "slider") {
+    const label = document.createElement("label");
+    label.className = "field-label";
+    label.textContent = field.label;
+    const row = document.createElement("div");
+    row.className = "slider-row";
+    const slider = document.createElement("input");
+    slider.type = "range";
+    slider.min = field.min;
+    slider.max = field.max;
+    slider.value = state.answers[field.key] ?? field.default ?? 0;
+    const value = document.createElement("span");
+    value.className = "slider-value";
+    value.textContent = slider.value + (field.suffix || "");
+    slider.addEventListener("input", e => {
+      state.answers[field.key] = Number(e.target.value);
+      value.textContent = e.target.value + (field.suffix || "");
+    });
+    row.appendChild(slider);
+    row.appendChild(value);
+    const wrap = document.createElement("div");
+    wrap.appendChild(label);
+    wrap.appendChild(row);
+    return wrap;
+  }
+  if (field.type === "distortions") {
+    const wrap = document.createElement("div");
+    wrap.className = "distortions";
+    DISTORTIONS.forEach(d => {
+      const row = document.createElement("label");
+      row.className = "distortion";
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = state.answers.distortions.includes(d.name);
+      if (cb.checked) row.classList.add("checked");
+      cb.addEventListener("change", e => {
+        if (e.target.checked) {
+          if (!state.answers.distortions.includes(d.name)) {
+            state.answers.distortions.push(d.name);
+          }
+          row.classList.add("checked");
+        } else {
+          state.answers.distortions = state.answers.distortions.filter(x => x !== d.name);
+          row.classList.remove("checked");
+        }
+      });
+      const text = document.createElement("div");
+      const name = document.createElement("div");
+      name.className = "distortion-name";
+      name.textContent = d.name;
+      const desc = document.createElement("div");
+      desc.className = "distortion-desc";
+      desc.textContent = d.desc;
+      text.appendChild(name);
+      text.appendChild(desc);
+      row.appendChild(cb);
+      row.appendChild(text);
+      wrap.appendChild(row);
+    });
+    return wrap;
+  }
+  return document.createTextNode("");
+}
+
+function renderReview() {
+  const wrap = document.createElement("div");
+  wrap.className = "review";
+
+  const blocks = [
+    ["When", state.answers.datetime],
+    ["Situation", state.answers.situation],
+    ["Automatic thought", `${state.answers.automaticThought || ""}${state.answers.automaticThought ? `\n(believed ${state.answers.thoughtBelief}%)` : ""}`],
+    ["Emotion", `${state.answers.emotion || ""}${state.answers.emotion ? ` — intensity ${state.answers.emotionIntensity}%` : ""}`],
+    ["Cognitive distortions", state.answers.distortions.length ? state.answers.distortions : ""],
+    ["Evidence the thought is true", state.answers.evidenceFor],
+    ["Evidence the thought is not true", state.answers.evidenceAgainst],
+    ["Alternative explanation", state.answers.alternative],
+    ["Coping / worst-best-realistic", state.answers.coping],
+    ["Effect of believing vs. changing the thought", state.answers.effect],
+    ["What you'd tell a friend", state.answers.friend],
+    ["Adaptive response", `${state.answers.adaptiveResponse || ""}${state.answers.adaptiveResponse ? `\n(believed ${state.answers.adaptiveBelief}%)` : ""}`],
+    ["Outcome", `Original thought now believed ${state.answers.outcomeBelief}% · emotion intensity ${state.answers.outcomeIntensity}%${state.answers.nextAction ? `\nNext: ${state.answers.nextAction}` : ""}`],
+  ];
+
+  blocks.forEach(([heading, value]) => {
+    const h = document.createElement("h3");
+    h.textContent = heading;
+    wrap.appendChild(h);
+    if (Array.isArray(value)) {
+      const ul = document.createElement("ul");
+      value.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        ul.appendChild(li);
+      });
+      wrap.appendChild(ul);
+    } else if (value && String(value).trim()) {
+      const p = document.createElement("p");
+      p.textContent = value;
+      wrap.appendChild(p);
+    } else {
+      const p = document.createElement("p");
+      p.className = "empty";
+      p.textContent = "(left blank)";
+      wrap.appendChild(p);
+    }
+  });
+
+  return wrap;
+}
+
+// ---------------------------------------------------------------------------
+// View renderers
+// ---------------------------------------------------------------------------
+function renderQuiz() {
+  if (state.saved) {
+    renderSaved();
+    return;
+  }
+
+  progressEl.style.display = "";
+  const step = STEPS[state.stepIndex];
+  card.innerHTML = "";
+
+  const pct = (state.stepIndex / (STEPS.length - 1)) * 100;
+  progressFill.style.width = pct + "%";
+  progressLabel.textContent = `Step ${state.stepIndex + 1} of ${STEPS.length}`;
+
+  const title = document.createElement("h2");
+  title.className = "step-title";
+  title.textContent = step.title;
+  card.appendChild(title);
+
+  if (step.help) {
+    const help = document.createElement("p");
+    help.className = "step-help";
+    help.textContent = step.help;
+    card.appendChild(help);
+  }
+
+  if (step.review) {
+    card.appendChild(renderReview());
+  } else {
+    step.fields.forEach(f => card.appendChild(renderField(f)));
+  }
+
+  if (state.saveError) {
+    const err = document.createElement("div");
+    err.className = "error";
+    err.textContent = "Could not save: " + state.saveError;
+    card.appendChild(err);
+  }
+
+  const nav = document.createElement("div");
+  nav.className = "nav";
+
+  const back = document.createElement("button");
+  back.textContent = "Back";
+  back.disabled = state.stepIndex === 0;
+  back.addEventListener("click", () => {
+    if (state.stepIndex > 0) {
+      state.stepIndex--;
+      state.saveError = null;
+      render();
+    }
+  });
+
+  const next = document.createElement("button");
+  next.className = "primary";
+  if (state.stepIndex === STEPS.length - 1) {
+    next.textContent = "Save";
+    next.addEventListener("click", submit);
+  } else {
+    next.textContent = "Next";
+    next.addEventListener("click", () => {
+      state.stepIndex++;
+      render();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
+
+  nav.appendChild(back);
+  nav.appendChild(next);
+  card.appendChild(nav);
+}
+
+function renderSaved() {
+  progressEl.style.display = "none";
+  card.innerHTML = "";
+  const wrap = document.createElement("div");
+  wrap.className = "saved";
+  wrap.innerHTML = `
+    <div class="saved-icon">✓</div>
+    <h2>Saved</h2>
+    <p class="subtitle">Your thought record was written to disk.</p>
+    <p style="margin-top:14px"><code>${state.saved.filename}</code></p>
+    <p class="subtitle" style="margin-top:6px">in <code>./results/cbt/</code></p>
+  `;
+  const actions = document.createElement("div");
+  actions.className = "saved-actions";
+
+  const newBtn = document.createElement("button");
+  newBtn.className = "primary";
+  newBtn.textContent = "Start another";
+  newBtn.addEventListener("click", goToQuiz);
+
+  const listBtn = document.createElement("button");
+  listBtn.textContent = "View past entries";
+  listBtn.addEventListener("click", goToList);
+
+  actions.appendChild(newBtn);
+  actions.appendChild(listBtn);
+  wrap.appendChild(actions);
+  card.appendChild(wrap);
+}
+
+function renderList() {
+  progressEl.style.display = "none";
+  card.innerHTML = "";
+
+  const title = document.createElement("h2");
+  title.className = "step-title";
+  title.textContent = "Past entries";
+  card.appendChild(title);
+
+  if (state.entriesLoading) {
+    const sk = document.createElement("p");
+    sk.className = "skeleton";
+    sk.textContent = "Loading…";
+    card.appendChild(sk);
+    return;
+  }
+
+  if (state.entriesError) {
+    const err = document.createElement("div");
+    err.className = "error";
+    err.textContent = "Could not load entries: " + state.entriesError;
+    card.appendChild(err);
+    return;
+  }
+
+  if (!state.entries || state.entries.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "entry-empty";
+    empty.textContent = "No entries yet — your saved thought records will show up here.";
+    card.appendChild(empty);
+    addBackToStart(card);
+    return;
+  }
+
+  const list = document.createElement("div");
+  list.className = "entry-list";
+  state.entries.forEach(e => {
+    const item = document.createElement("button");
+    item.className = "entry-item";
+    item.addEventListener("click", () => goToEntry(e.filename));
+
+    const date = document.createElement("div");
+    date.className = "entry-date";
+    date.textContent = formatDate(e.savedAt || e.datetime);
+    item.appendChild(date);
+
+    const summary = document.createElement("div");
+    summary.className = "entry-summary";
+    summary.textContent = e.summary || "(no description)";
+    item.appendChild(summary);
+
+    if (e.emotion || typeof e.emotionIntensity === "number") {
+      const emo = document.createElement("div");
+      emo.className = "entry-emotion";
+      const parts = [];
+      if (e.emotion) parts.push(e.emotion);
+      if (typeof e.emotionIntensity === "number") parts.push(`${e.emotionIntensity}%`);
+      emo.textContent = parts.join(" · ");
+      item.appendChild(emo);
+    }
+
+    list.appendChild(item);
+  });
+  card.appendChild(list);
+  addBackToStart(card);
+}
+
+function addBackToStart(parent) {
+  const nav = document.createElement("div");
+  nav.className = "nav";
+  nav.style.marginTop = "20px";
+  const spacer = document.createElement("div");
+  const right = document.createElement("div");
+  right.className = "nav-right";
+  const btn = document.createElement("button");
+  btn.className = "primary";
+  btn.textContent = "Back to start";
+  btn.addEventListener("click", goToQuiz);
+  right.appendChild(btn);
+  nav.appendChild(spacer);
+  nav.appendChild(right);
+  parent.appendChild(nav);
+}
+
+function renderEntry() {
+  progressEl.style.display = "none";
+  card.innerHTML = "";
+
+  if (state.entryLoading) {
+    const sk = document.createElement("p");
+    sk.className = "skeleton";
+    sk.textContent = "Loading…";
+    card.appendChild(sk);
+    return;
+  }
+
+  if (state.entryError) {
+    const err = document.createElement("div");
+    err.className = "error";
+    err.textContent = "Could not load entry: " + state.entryError;
+    card.appendChild(err);
+    addBackButtons(card);
+    return;
+  }
+
+  if (!state.currentEntry) return;
+
+  const r = state.currentEntry.record;
+  const title = document.createElement("h2");
+  title.className = "step-title";
+  title.textContent = "Thought record";
+  card.appendChild(title);
+
+  const meta = document.createElement("p");
+  meta.className = "entry-meta";
+  meta.textContent = formatDate(r.datetime || r.savedAt);
+  card.appendChild(meta);
+
+  ENTRY_SECTIONS.forEach(sec => {
+    let value;
+    let isEmpty = false;
+
+    if (sec.kind === "thoughtCombo") {
+      const t = r.automaticThought;
+      if (!nonEmpty(t)) { isEmpty = true; value = ""; }
+      else {
+        value = t + (typeof r.thoughtBelief === "number" ? `  (believed ${r.thoughtBelief}%)` : "");
+      }
+    } else if (sec.kind === "emotionCombo") {
+      const parts = [];
+      if (nonEmpty(r.emotion)) parts.push(r.emotion);
+      if (typeof r.emotionIntensity === "number" && nonEmpty(r.emotion)) parts.push(`intensity ${r.emotionIntensity}%`);
+      if (parts.length === 0) { isEmpty = true; value = ""; }
+      else value = parts.join(" · ");
+    } else if (sec.kind === "adaptiveCombo") {
+      const a = r.adaptiveResponse;
+      if (!nonEmpty(a)) { isEmpty = true; value = ""; }
+      else value = a + (typeof r.adaptiveBelief === "number" ? `  (believed ${r.adaptiveBelief}%)` : "");
+    } else if (sec.kind === "outcomeCombo") {
+      const lines = [];
+      if (typeof r.outcomeBelief === "number") lines.push(`Original thought now believed: ${r.outcomeBelief}%`);
+      if (typeof r.outcomeIntensity === "number") lines.push(`Emotion intensity now: ${r.outcomeIntensity}%`);
+      if (nonEmpty(r.nextAction)) lines.push(`Next: ${r.nextAction}`);
+      if (lines.length === 0) { isEmpty = true; value = ""; }
+      else value = lines.join("\n");
+    } else if (sec.kind === "list") {
+      value = r[sec.key] || [];
+      isEmpty = !Array.isArray(value) || value.length === 0;
+    } else {
+      value = r[sec.key];
+      isEmpty = !nonEmpty(value);
+    }
+
+    const block = document.createElement("div");
+    block.className = "entry-section";
+    const h = document.createElement("h3");
+    h.textContent = sec.label;
+    block.appendChild(h);
+
+    if (isEmpty) {
+      const p = document.createElement("p");
+      p.className = "empty";
+      p.textContent = "(left blank)";
+      block.appendChild(p);
+    } else if (sec.kind === "list") {
+      const ul = document.createElement("ul");
+      value.forEach(v => {
+        const li = document.createElement("li");
+        li.textContent = v;
+        ul.appendChild(li);
+      });
+      block.appendChild(ul);
+    } else {
+      const p = document.createElement("p");
+      p.textContent = value;
+      block.appendChild(p);
+    }
+    card.appendChild(block);
+  });
+
+  addBackButtons(card);
+}
+
+function addBackButtons(parent) {
+  const nav = document.createElement("div");
+  nav.className = "nav";
+  nav.style.marginTop = "24px";
+  const left = document.createElement("button");
+  left.textContent = "← All entries";
+  left.addEventListener("click", goToList);
+  const right = document.createElement("div");
+  right.className = "nav-right";
+  const start = document.createElement("button");
+  start.className = "primary";
+  start.textContent = "Back to start";
+  start.addEventListener("click", goToQuiz);
+  right.appendChild(start);
+  nav.appendChild(left);
+  nav.appendChild(right);
+  parent.appendChild(nav);
+}
+
+// ---------------------------------------------------------------------------
+// Top-level render
+// ---------------------------------------------------------------------------
+function render() {
+  renderHeader();
+  if (state.view === "quiz") renderQuiz();
+  else if (state.view === "list") renderList();
+  else if (state.view === "entry") renderEntry();
+}
+
+async function submit() {
+  state.saveError = null;
+  try {
+    const res = await fetch("/api/cbt/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(state.answers),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      state.saveError = data.error || ("HTTP " + res.status);
+      render();
+      return;
+    }
+    state.saved = data;
+    render();
+  } catch (e) {
+    state.saveError = e.message;
+    render();
+  }
+}
+
+if (location.hash === "#list") {
+  goToList();
+} else {
+  render();
+}
+</script>
+</body>
+</html>
