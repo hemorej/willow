@@ -17,13 +17,14 @@ Both save each result as a JSON file on your computer. It is meant to be run on 
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) 18 or newer (anything modern is fine)
+- [pnpm](https://pnpm.io/) (`npm install -g pnpm`)
 
 ## Install & run
 
 ```bash
 cd bdi2-app
-npm install
-npm start
+pnpm install
+pnpm start
 ```
 
 Then open <http://localhost:3000> in your browser.
@@ -58,15 +59,23 @@ To stop the server, press `Ctrl+C` in the terminal.
 ```
 bdi2-app/
 ├── package.json
+├── pnpm-lock.yaml
+├── pnpm-workspace.yaml    # pnpm settings (allowed build scripts)
 ├── server.js              # Express server + JSON save/list APIs for both tools
 ├── README.md
+├── scripts/
+│   └── build.js           # esbuild pipeline: minifies JS/CSS, copies statics to dist/
+├── infra/
+│   ├── forge_deploy.sh    # deployment script for Forge hosting
+│   ├── nginx.conf         # nginx config for production
+│   └── supervisord.conf   # process manager config for production
 ├── results/               # one JSON file per BDI-II submission (created on demand)
 │   └── cbt/               # one JSON file per CBT thought record (created on demand)
 └── public/
     ├── index.html         # landing page, links to both tools
     ├── quiz.html          # the BDI-II questionnaire
     ├── results.html       # past BDI-II results index with chart
-    ├── questions.js       # questions + severity bands
+    ├── questions.js       # BDI-II questions array + severity bands + severityFor()
     ├── cbt.html           # CBT thought record (quiz + entry list + entry detail)
     └── style.css
 ```

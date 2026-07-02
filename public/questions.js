@@ -200,6 +200,12 @@ const SEVERITY_BANDS = [
   { name: 'Severe',   min: 27, max: 60, color: '#c15a4e' }
 ];
 
+/**
+ * Returns the severity band for a given total score.
+ * Falls back to the last (highest) band if no range matches.
+ * @param {number} score - Total BDI-II score (0–60).
+ * @returns {{ name: string, min: number, max: number, color: string }}
+ */
 function severityFor(score) {
   for (const b of SEVERITY_BANDS) {
     if (score >= b.min && score <= b.max) return b;

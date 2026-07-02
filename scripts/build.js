@@ -1,5 +1,5 @@
 // Builds minified production assets from public/ into dist/.
-// Run with: npm run build
+// Run with: pnpm run build
 const fs = require('fs');
 const path = require('path');
 const esbuild = require('esbuild');
@@ -10,6 +10,7 @@ const OUT_DIR = path.join(__dirname, '..', 'dist');
 fs.rmSync(OUT_DIR, { recursive: true, force: true });
 fs.mkdirSync(OUT_DIR, { recursive: true });
 
+/** Minify JS/CSS with esbuild and copy remaining static assets to dist/. */
 async function build() {
   await esbuild.build({
     entryPoints: [path.join(SRC_DIR, 'questions.js')],
@@ -27,7 +28,11 @@ async function build() {
     sourcemap: true
   });
 
-  // HTML and other static files/directories are copied as-is.
+  /**
+   * Recursively copy src into dest, mirroring the directory structure.
+   * @param {string} src
+   * @param {string} dest
+   */
   function copyRecursive(src, dest) {
     const stat = fs.statSync(src);
     if (stat.isDirectory()) {

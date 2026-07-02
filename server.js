@@ -1,6 +1,17 @@
-// Simple local Express server for the BDI-II quiz app.
-// Run with: node server.js
-// Then open: http://localhost:3000
+/**
+ * Local Express server for the BDI-II quiz app and CBT thought record tool.
+ *
+ * Run with: node server.js
+ * Then open: http://localhost:3000
+ *
+ * Routes:
+ *   POST /api/results            — save a BDI-II quiz submission
+ *   GET  /api/results            — list all past BDI-II results (summary)
+ *   GET  /api/results/:id        — fetch a single BDI-II result (full JSON)
+ *   POST /api/cbt/submit         — save a CBT thought record
+ *   GET  /api/cbt/entries        — list all past CBT entries (summary)
+ *   GET  /api/cbt/entries/:file  — fetch a single CBT entry (full JSON)
+ */
 
 const express = require('express');
 const fs = require('fs');
@@ -22,6 +33,12 @@ if (!fs.existsSync(CBT_DIR)) {
 // Filename safety for CBT thought records: only our generated pattern, no path separators.
 const CBT_SAFE_FILENAME = /^thought-record-[0-9A-Za-z\-]+\.json$/;
 
+/**
+ * Returns a one-line preview of a CBT thought record (≤ 140 chars).
+ * Tries situation → automaticThought → adaptiveResponse in order.
+ * @param {object} record - Parsed CBT thought-record JSON.
+ * @returns {string}
+ */
 function cbtSummarize(record) {
   const candidates = [record.situation, record.automaticThought, record.adaptiveResponse];
   const first = candidates.find((v) => v && String(v).trim());
@@ -31,7 +48,7 @@ function cbtSummarize(record) {
 }
 
 // Serve minified production assets from dist/ if they've been built
-// (npm run build), otherwise fall back to the raw files in public/.
+// (pnpm run build), otherwise fall back to the raw files in public/.
 const DIST_DIR = path.join(__dirname, 'dist');
 const STATIC_DIR = fs.existsSync(DIST_DIR)
   ? DIST_DIR
