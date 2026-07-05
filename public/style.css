@@ -847,3 +847,105 @@ input[type="range"] {
   font-size: 14px;
   margin-top: 12px;
 }
+
+/* ---------------------------------------------------------------------- */
+/* Auth bar                                                                */
+/* ---------------------------------------------------------------------- */
+
+.auth-bar {
+  position: fixed;
+  top: 14px;
+  right: 20px;
+  z-index: 100;
+}
+
+.auth-bar a {
+  font-size: 13px;
+  font-family: var(--font-body);
+  color: var(--muted);
+  text-decoration: none;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.auth-bar a:hover {
+  opacity: 1;
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Login page                                                              */
+/* ---------------------------------------------------------------------- */
+
+.login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.login-card {
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 40px 48px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-title {
+  font: 500 32px/1.15 var(--font-head);
+  margin: 0 0 28px;
+  color: var(--text);
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-top: 10px;
+}
+
+.field-input {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: 15px var(--font-body);
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+
+.field-input:focus {
+  border-color: var(--accent);
+}
+
+.login-submit {
+  margin-top: 20px;
+  width: 100%;
+  text-align: center;
+  border: none;
+  cursor: pointer;
+  font: 600 14px var(--font-body);
+}
+
+.login-error {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  background: #fbeaea;
+  border: 1px solid #f5c6c6;
+  border-radius: 6px;
+  color: #b54040;
+  font-size: 14px;
+}
