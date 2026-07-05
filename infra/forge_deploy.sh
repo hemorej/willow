@@ -10,4 +10,4 @@ $PNPM_PATH build
 
 $ACTIVATE_RELEASE()
 
-sudo supervisorctl restart daemon-916152:daemon-916152_00
+sudo supervisorctl restart daemon-910985:daemon-910985_00
