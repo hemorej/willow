@@ -2,11 +2,11 @@ $CREATE_RELEASE()
 
 cd $FORGE_RELEASE_DIRECTORY
 
-$pnpm_path install --frozen-lockfile
+$PNPM_PATH install --frozen-lockfile
 
 ln -s /mnt/volume-tor1-01/bdi2fonts public/fonts
 
-$pnpm_path build
+$PNPM_PATH build
 
 $ACTIVATE_RELEASE()
 
