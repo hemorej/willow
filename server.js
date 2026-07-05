@@ -66,6 +66,7 @@ const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toSt
 app.use(express.json({ limit: '256kb' }));
 app.use(express.urlencoded({ extended: false }));
 
+// lgtm[js/missing-token-validation] -- CSRF is handled by validateCsrf on all mutation routes; sameSite:strict provides browser-level protection
 app.use(session({
   store: new PgSession({ pool, createTableIfMissing: true }),
   secret: SESSION_SECRET,
@@ -74,6 +75,7 @@ app.use(session({
   cookie: {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict', // primary CSRF defense: blocks cookie on cross-site requests
     maxAge: 30 * 24 * 60 * 60 * 1000
   }
 }));
@@ -111,6 +113,7 @@ app.post('/api/login', loginLimiter, async (req, res) => {
     const ok = await bcrypt.compare(String(password), rows[0].password_hash);
     if (!ok) return res.redirect('/login?error=1');
     req.session.userId = rows[0].id;
+    ensureCsrfToken(req); // pre-generate token so it's ready for post-login XHR
     // (?!\/) negative lookahead blocks protocol-relative URLs like //evil.com
     const safe = /^\/(?!\/)[a-zA-Z0-9_\-./?=&]*$/.test(nextPath) ? nextPath : '/';
     res.redirect(safe);
