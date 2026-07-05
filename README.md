@@ -1,58 +1,93 @@
-# Self-care tools (local)
+# Self-care tools
 
-A small local web app bundling two self-report tools:
+A small web app bundling two evidence-based self-report tools:
 
 - **BDI-II Inventory** — a Beck Depression Inventory (BDI-II) self-report.
 - **CBT Thought Record** — a guided 14-step cognitive-behavioral therapy exercise.
 
-Both save each result as a JSON file on your computer. It is meant to be run on your own machine — there is no auth, no analytics, no external services. Results never leave your filesystem.
+Results are stored in a PostgreSQL database. Access is protected by a login form.
 
 ## Stack
 
-- Node.js + Express (single dependency), one server serving both tools
-- Plain HTML/CSS/JS in `public/`
-- BDI-II results saved to `./results/*.json`
-- CBT thought records saved to `./results/cbt/*.json`
+- Node.js + Express, serving plain HTML/CSS/JS
+- PostgreSQL with JSONB document store (no ORM)
+- Session auth via `express-session` + `connect-pg-simple`
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) 18 or newer (anything modern is fine)
+- Node.js 18 or newer
 - [pnpm](https://pnpm.io/) (`npm install -g pnpm`)
+- PostgreSQL 14 or newer
 
-## Install & run
+## First-time setup
 
 ```bash
-cd bdi2-app
+# 1. Install dependencies
 pnpm install
+
+# 2. Create the database
+createdb bdi2
+
+# 3. Copy and fill in the env template
+cp .env.template .env
+# Edit .env — set DATABASE_URL and SESSION_SECRET at minimum
+
+# 4. Create your login account (tables are created automatically on first run)
+DATABASE_URL=postgres://localhost/bdi2 pnpm run create-user
+
+# 5. (Optional) Import any existing JSON result files
+DATABASE_URL=postgres://localhost/bdi2 pnpm run import
+
+# 6. Start
 pnpm start
 ```
 
-Then open <http://localhost:3000> in your browser.
+Then open <http://localhost:3000>.
 
-To stop the server, press `Ctrl+C` in the terminal.
+### Generating a SESSION_SECRET
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+## Environment variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `SESSION_SECRET` | Yes (prod) | Cookie signing secret. Random ephemeral value used if unset (sessions lost on restart). |
+| `NODE_ENV` | No | Set to `production` to enable secure (HTTPS-only) session cookies |
+| `PORT` | No | HTTP port (default: 3000) |
+
+## Development
+
+```bash
+pnpm start    # runs server.js directly, serving from public/
+pnpm build    # minify JS/CSS to dist/ for production
+```
+
+The server serves `dist/` if it exists, otherwise falls back to `public/` directly.
 
 ## How it works
 
-- The landing page (`/`) links to both tools: start a new BDI-II test or thought record, or view past results for either.
-- The quiz (`/quiz.html`) shows one item at a time. Pick the answer that fits, click **Next**, and so on. The last button is **Submit**.
-- On submit, the browser POSTs the answers to `/api/results`, the server writes a timestamped JSON file into `results/`, and the score + severity are shown on screen.
-- The results page (`/results.html`) reads everything from `results/` via `/api/results`, plots a line chart of total scores over time with severity bands shaded behind, and lists every past result with a link to start a new test.
-- The thought record (`/cbt.html`) is a single page that walks through 14 steps, an entry list, and an entry detail view, all client-side. Linking to `/cbt.html#list` opens straight to the past-entries list.
-- On save, the browser POSTs to `/api/cbt/submit`, the server writes a timestamped JSON file into `results/cbt/`. Past entries are read via `/api/cbt/entries` and `/api/cbt/entries/<filename>`.
+- All routes require an authenticated session. Unauthenticated requests are redirected to `/login`.
+- The landing page (`/`) links to both tools.
+- The quiz (`/quiz.html`) shows one BDI-II item at a time. Answers are POSTed to `/api/results` on submit.
+- The results page (`/results.html`) plots a line chart of scores over time and lists all past results.
+- The thought record (`/cbt.html`) walks through 14 steps and saves to `/api/cbt/submit`. Link to `/cbt.html#list` to open the past-entries list directly.
 
 ## Notes on the inventory
 
-- Question 9 of the standard BDI-II (suicidal ideas) is **omitted** in this version, so the inventory has 20 items and a maximum total score of **60** (vs. 63 for the standard form).
-- Severity ranges have been scaled by 60/63 ≈ 0.952 from the standard cut-offs:
+Question 9 of the standard BDI-II (suicidal ideas) is **omitted**, so the inventory has 20 items and a maximum total score of **60** (vs. 63 for the standard form). Severity ranges are scaled accordingly:
 
-| Severity | Score range (this app) | Standard BDI-II |
-|---|---|---|
-| Minimal  | 0–12  | 0–13  |
-| Mild     | 13–18 | 14–19 |
-| Moderate | 19–26 | 20–28 |
-| Severe   | 27–60 | 29–63 |
+| Severity | Score (this app) | Standard BDI-II |
+|----------|-----------------|-----------------|
+| Minimal  | 0–12            | 0–13            |
+| Mild     | 13–18           | 14–19           |
+| Moderate | 19–26           | 20–28           |
+| Severe   | 27–60           | 29–63           |
 
-- This screening tool is **informational, not a clinical diagnosis**. If you are in distress or have thoughts of self-harm, please reach out to a qualified professional or local crisis service.
+This is a self-tracking tool, not a clinical diagnosis. If you are in distress or have thoughts of self-harm, please reach out to a qualified professional or local crisis service.
 
 ## File layout
 
@@ -60,50 +95,36 @@ To stop the server, press `Ctrl+C` in the terminal.
 bdi2-app/
 ├── package.json
 ├── pnpm-lock.yaml
-├── pnpm-workspace.yaml    # pnpm settings (allowed build scripts)
-├── server.js              # Express server + JSON save/list APIs for both tools
-├── README.md
+├── .env.template          # copy to .env and fill in
+├── server.js              # Express server + all API routes
+├── db.js                  # pg.Pool singleton
+├── migrate.js             # schema creation (runs on startup)
 ├── scripts/
-│   └── build.js           # esbuild pipeline: minifies JS/CSS, copies statics to dist/
+│   ├── build.js           # esbuild pipeline: minifies JS/CSS, copies statics to dist/
+│   ├── create-user.js     # interactive CLI to create/update the login user
+│   └── import.js          # one-time import of legacy JSON files into PostgreSQL
 ├── infra/
 │   ├── forge_deploy.sh    # deployment script for Forge hosting
-│   ├── nginx.conf         # nginx config for production
-│   └── supervisord.conf   # process manager config for production
-├── results/               # one JSON file per BDI-II submission (created on demand)
-│   └── cbt/               # one JSON file per CBT thought record (created on demand)
+│   ├── nginx.conf         # nginx reverse-proxy config (all traffic → Express)
+│   └── supervisord.conf   # process manager config
 └── public/
-    ├── index.html         # landing page, links to both tools
-    ├── quiz.html          # the BDI-II questionnaire
-    ├── results.html       # past BDI-II results index with chart
-    ├── questions.js       # BDI-II questions array + severity bands + severityFor()
-    ├── cbt.html           # CBT thought record (quiz + entry list + entry detail)
+    ├── login.html         # login form
+    ├── index.html         # landing page
+    ├── quiz.html          # BDI-II questionnaire
+    ├── results.html       # past BDI-II results with chart
+    ├── cbt.html           # CBT thought record
+    ├── questions.js       # BDI-II questions + severity bands
     └── style.css
 ```
 
-## Result file shape
+## Deployment (Forge)
 
-```json
-{
-  "id": "bdi2-2026-04-28T12-34-56-789Z",
-  "takenAt": "2026-04-28T12:34:56.789Z",
-  "totalScore": 14,
-  "severity": "Mild",
-  "answers": [
-    {
-      "questionIndex": 0,
-      "questionTitle": "Sadness",
-      "answerIndex": 1,
-      "answerText": "I feel sad",
-      "score": 1
-    }
-  ],
-  "note": null,
-  "meta": {
-    "questionCount": 20,
-    "skippedQuestion9": true,
-    "maxPossibleScore": 60
-  }
-}
+Set `DATABASE_URL`, `SESSION_SECRET`, and `NODE_ENV=production` in Forge's environment panel. They are passed automatically to the supervised process.
+
+After the first deploy, SSH in and run:
+
+```bash
+cd /home/forge/bdi2.jerome-arfouche.ca/current
+DATABASE_URL=... pnpm run create-user
+DATABASE_URL=... pnpm run import   # only if migrating from the old file-based store
 ```
-
-You can open these files in any text editor, back them up, or feed them to other tools.
