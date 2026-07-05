@@ -15,6 +15,13 @@ const PORT = process.env.PORT || 3000;
 // Trust the nginx reverse proxy so rate limiting uses the real client IP.
 app.set('trust proxy', 1);
 
+const globalLimiter = RateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 const loginLimiter = RateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 10,
@@ -68,6 +75,7 @@ function requireAuth(req, res, next) {
   res.status(401).json({ error: 'Unauthorized' });
 }
 
+app.use(globalLimiter);
 app.use(requireAuth);
 app.use(express.static(STATIC_DIR, { maxAge: '1d' }));
 app.get('/login', (_req, res) => res.sendFile(path.join(STATIC_DIR, 'login.html')));
