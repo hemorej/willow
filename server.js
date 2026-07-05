@@ -5,11 +5,23 @@ const crypto = require('crypto');
 const session = require('express-session');
 const PgSession = require('connect-pg-simple')(session);
 const bcrypt = require('bcryptjs');
+const RateLimit = require('express-rate-limit');
 const pool = require('./db');
 const { initDb } = require('./migrate');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Trust the nginx reverse proxy so rate limiting uses the real client IP.
+app.set('trust proxy', 1);
+
+const loginLimiter = RateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many login attempts, please try again later.' }
+});
 
 const CBT_SAFE_FILENAME = /^thought-record-[0-9A-Za-z\-]+\.json$/;
 
@@ -58,12 +70,13 @@ function requireAuth(req, res, next) {
 
 app.use(requireAuth);
 app.use(express.static(STATIC_DIR, { maxAge: '1d' }));
+app.get('/login', (_req, res) => res.sendFile(path.join(STATIC_DIR, 'login.html')));
 
 // ---------------------------------------------------------------------------
 // Auth routes
 // ---------------------------------------------------------------------------
 
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', loginLimiter, async (req, res) => {
   const { username, password, next: nextPath } = req.body;
   if (!username || !password) return res.redirect('/login?error=1');
   try {
