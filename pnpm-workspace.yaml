@@ -13,3 +13,14 @@ minimumReleaseAge: 4320
 # patches you've manually verified): add the package name here.
 # minimumReleaseAgeExclude:
 #   - some-package
+
+# Refuse to install a package version whose publisher trust evidence is
+# weaker than an earlier release of the same package (e.g. it used to
+# be published with npm provenance/trusted-publisher attestation and
+# the new version isn't) — a common signature of a hijacked maintainer
+# account publishing from their own machine instead of CI.
+trustPolicy: no-downgrade
+# Packages that predate provenance/trusted publishing and so can never
+# satisfy trustPolicy: no-downgrade go here once verified by hand.
+# trustPolicyExclude:
+#   - 'some-package@1.2.3'

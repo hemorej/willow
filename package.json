@@ -3,6 +3,7 @@
     "version": "1.0.0",
     "description": "Local BDI-II self-report inventory with result history",
     "main": "server.js",
+    "packageManager": "pnpm@11.9.0",
     "scripts":
     {
         "dev": "brew services start postgresql@18; node server.js",

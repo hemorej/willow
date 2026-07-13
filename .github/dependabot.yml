@@ -1,6 +1,20 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
+  # Dependency version bumps. Kept low-volume and non-automerging so
+  # every bump PR passes the new-publisher check and audit workflow,
+  # and gets a human look before merge (see dependency-publisher-check.yml
+  # and audit.yml).
+  - package-ecosystem: "npm" # supports pnpm-lock.yaml
     directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+
+  # Keeps the SHA-pinned actions in .github/workflows/*.yml current.
+  # Dependabot updates the pin and the trailing "# vX.Y.Z" comment
+  # together as long as the comment stays on the same line as `uses:`.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"

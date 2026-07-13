@@ -1,0 +1,45 @@
+name: Dependency audit
+
+# Checks the dependency tree against known vulnerability advisories.
+# Runs on dependency-touching PRs (catches vulns already known at the
+# time a package is added) and weekly on a schedule (catches vulns
+# disclosed later against packages already sitting in the lockfile).
+on:
+  pull_request:
+    paths:
+      - "pnpm-lock.yaml"
+      - "package.json"
+  schedule:
+    - cron: "0 7 * * 1" # Monday 07:00 UTC
+  workflow_dispatch: {}
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      # Version is read from package.json's "packageManager" field, so
+      # this and local dev always agree.
+      - uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a # v4.4.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24.x"
+
+      # Installs from the committed lockfile only — never re-resolves
+      # versions, so CI can't silently pull in something the lockfile
+      # doesn't pin. Also prints any build scripts pnpm refused to run
+      # because the package isn't in pnpm-workspace.yaml's
+      # onlyBuiltDependencies allowlist; review that output below when
+      # a new native/postinstall dependency shows up.
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit for known vulnerabilities
+        run: pnpm audit --audit-level=high
+
+      - name: Verify registry signatures
+        run: pnpm audit signatures
