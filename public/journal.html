@@ -47,6 +47,7 @@
   </div>
 
   <script src="/moods.js"></script>
+  <script src="/gratitude.js"></script>
   <script>
     function localDateFromISO(iso) {
       const [y, m, d] = iso.split('-').map(Number);
@@ -144,9 +145,24 @@
           }
 
           if (hasText) {
+            const grat = !!e.gratitude;
             const bubble = document.createElement('div');
-            bubble.className = 'entry-bubble';
-            bubble.textContent = e.text;
+            bubble.className = 'entry-bubble' + (grat ? ' gratitude' : '');
+
+            if (grat) {
+              const caption = document.createElement('div');
+              caption.className = 'gratitude-caption';
+              caption.innerHTML = sproutSvg(14);
+              const tag = document.createElement('span');
+              tag.textContent = e.gratitudeTag || 'Grateful for';
+              caption.appendChild(tag);
+              bubble.appendChild(caption);
+            }
+
+            const textEl = document.createElement('div');
+            textEl.textContent = e.text;
+            bubble.appendChild(textEl);
+
             entryRow.appendChild(bubble);
           } else if (hasMood) {
             const line = document.createElement('div');

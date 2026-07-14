@@ -128,12 +128,54 @@ body {
   width: 100%;
 }
 
+.compose-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 10px;
+}
+
 .date-eyebrow {
   font: 600 12px var(--font-body);
   letter-spacing: .14em;
   text-transform: uppercase;
   color: var(--muted);
-  margin: 0 0 12px;
+  margin: 0;
+}
+
+.gratitude-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font: 600 12px var(--font-body);
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.gratitude-toggle svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+.gratitude-toggle.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* Bare <button>; neutralize the global button:hover fill (see .mood-btn). */
+.gratitude-toggle:hover {
+  background: transparent;
+}
+
+.gratitude-toggle.on:hover {
+  background: var(--accent-soft);
 }
 
 .journal-greeting {
@@ -318,6 +360,27 @@ body {
   font: 400 18px/1.55 var(--font-head);
   color: var(--text);
   white-space: pre-wrap;
+}
+
+.entry-bubble.gratitude {
+  background: var(--accent-soft);
+  box-shadow: none;
+}
+
+.gratitude-caption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 7px;
+  color: var(--accent);
+  font: 600 11px var(--font-body);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.gratitude-caption svg {
+  display: block;
+  flex-shrink: 0;
 }
 
 .entry-mood-only {

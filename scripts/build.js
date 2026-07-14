@@ -13,7 +13,7 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
 /** Minify JS/CSS with esbuild and copy remaining static assets to dist/. */
 async function build() {
   await esbuild.build({
-    entryPoints: [path.join(SRC_DIR, 'questions.js'), path.join(SRC_DIR, 'moods.js')],
+    entryPoints: [path.join(SRC_DIR, 'questions.js'), path.join(SRC_DIR, 'moods.js'), path.join(SRC_DIR, 'gratitude.js')],
     outdir: OUT_DIR,
     minify: true,
     bundle: false,

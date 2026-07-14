@@ -37,6 +37,9 @@ async function initDb() {
 
     CREATE INDEX IF NOT EXISTS journal_entries_date_order_idx
       ON journal_entries (entry_date DESC, entry_order DESC);
+
+    ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS gratitude BOOLEAN NOT NULL DEFAULT false;
+    ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS gratitude_tag TEXT;
   `);
 }
 

@@ -35,7 +35,13 @@
 
     <div class="journal-home">
       <div class="journal-home-inner">
-        <p class="date-eyebrow" id="date-eyebrow"></p>
+        <div class="compose-header-row">
+          <p class="date-eyebrow" id="date-eyebrow"></p>
+          <button type="button" class="gratitude-toggle" id="gratitude-toggle" title="Answer a gratitude prompt">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12c0-3 2-5 6-5 0 3-2 5-6 5z"/><path d="M12 14c0-3-2-5-6-5 0 3 2 5 6 5z"/></svg>
+            <span>Gratitude</span>
+          </button>
+        </div>
         <h1 class="journal-greeting" id="greeting"></h1>
 
         <textarea
@@ -53,6 +59,7 @@
   </div>
 
   <script src="/moods.js"></script>
+  <script src="/gratitude.js"></script>
   <script>
     let _csrfToken = null;
     async function getCsrfToken() {
@@ -108,7 +115,24 @@
 
     const pool = PROMPTS[partOfDay(now.getHours())];
     const seed = Math.floor(Math.random() * 997);
-    document.getElementById('greeting').textContent = pool[seed % pool.length];
+    const regularGreeting = pool[seed % pool.length];
+    const greetingEl = document.getElementById('greeting');
+    greetingEl.textContent = regularGreeting;
+
+    const FOCUSED_PLACEHOLDER = 'Start writing. Whatever comes.';
+    const FOCUSED_PLACEHOLDER_GRATITUDE = 'Name it, big or small…';
+
+    // Gratitude toggle
+    let gratitudeOn = false;
+    let gratIdx = 0;
+    const gratToggle = document.getElementById('gratitude-toggle');
+    gratToggle.addEventListener('click', () => {
+      gratitudeOn = !gratitudeOn;
+      if (gratitudeOn) gratIdx = Math.floor(Math.random() * GRATITUDE_PROMPTS.length);
+      gratToggle.classList.toggle('on', gratitudeOn);
+      greetingEl.textContent = gratitudeOn ? GRATITUDE_PROMPTS[gratIdx].prompt : regularGreeting;
+      draft.placeholder = gratitudeOn ? FOCUSED_PLACEHOLDER_GRATITUDE : FOCUSED_PLACEHOLDER;
+    });
 
     // Mood row
     let selectedMood = null;
@@ -147,11 +171,13 @@
       const pad = n => String(n).padStart(2, '0');
       const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 
+      const gratitudeTag = gratitudeOn ? GRATITUDE_PROMPTS[gratIdx].tag : null;
+
       try {
         await fetch('/api/journal/entries', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': await getCsrfToken() },
-          body: JSON.stringify({ date, text: text || null, mood: selectedMood }),
+          body: JSON.stringify({ date, text: text || null, mood: selectedMood, gratitude: gratitudeOn, gratitudeTag }),
         });
       } catch (e) {
         console.error('save failed', e);
