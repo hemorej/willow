@@ -84,7 +84,7 @@ app.use(session({
   }
 }));
 
-const PUBLIC_PATHS = new Set(['/login', '/login.html', '/style.css', '/theme.js', '/favicon.svg', '/robots.txt']);
+const PUBLIC_PATHS = new Set(['/login', '/login.html', '/style.css', '/theme.js', '/favicon.svg', '/favicon-32.png', '/apple-touch-icon.png', '/icon-192.png', '/icon-512.png', '/manifest.json', '/robots.txt']);
 
 function requireAuth(req, res, next) {
   if (PUBLIC_PATHS.has(req.path) || req.path.startsWith('/fonts/')) return next();
