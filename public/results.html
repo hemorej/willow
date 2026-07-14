@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <script src="/theme.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Willow — Past results</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -10,6 +11,32 @@
 </head>
 <body>
   <div class="container">
+    <header class="top-bar">
+      <a class="wordmark" href="/">
+        <span class="wordmark-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c0-7 3-13 11-16-1 8-4 13-11 16z"/><path d="M8.5 15.5C11 13 13 9.5 15 4"/></svg>
+        </span>
+        <span class="wordmark-name">Willow</span>
+      </a>
+      <div class="top-bar-right">
+        <nav class="nav-cluster">
+          <a class="nav-pill" href="/journal.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v18H6.5A2.5 2.5 0 0 1 4 18.5v-13z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v18h5.5a2.5 2.5 0 0 0 2.5-2.5v-13z"/></svg>
+            Log
+          </a>
+          <a class="nav-pill active" href="/quiz.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 4-6"/></svg>
+            BDI
+          </a>
+          <a class="nav-pill" href="/cbt.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            CBT
+          </a>
+        </nav>
+        <button id="theme-toggle" class="theme-toggle" type="button"></button>
+      </div>
+    </header>
+
     <header class="app-header">
       <div class="title-block">
         <a class="text-link" href="/">← Home</a>
@@ -78,6 +105,12 @@
     }
 
     function buildChart(items) {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const gridStroke = isDark ? '#ffffff14' : '#00000018';
+      const baselineStroke = isDark ? '#ffffff2b' : '#00000022';
+      const axisColor = isDark ? 'var(--muted)' : '#8a8178';
+      const bandOpacity = isDark ? 0.18 : 0.12;
+
       // items are sorted desc by takenAt; chart wants ascending in time.
       const data = [...items].reverse();
       const W = 720, H = 240;
@@ -102,7 +135,7 @@
         const yBot = yFor(Math.max(0, b.min - 1)); // include band fully
         const h = yBot - yTop;
         parts.push(
-          `<rect x="${padL}" y="${yTop}" width="${innerW}" height="${h}" fill="${b.color}" fill-opacity="0.12" />`
+          `<rect x="${padL}" y="${yTop}" width="${innerW}" height="${h}" fill="${b.color}" fill-opacity="${bandOpacity}" />`
         );
       });
 
@@ -111,16 +144,16 @@
       ticks.forEach((t) => {
         const y = yFor(t);
         parts.push(
-          `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="#00000018" stroke-width="1" stroke-dasharray="2,3" />`
+          `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="${gridStroke}" stroke-width="1" stroke-dasharray="2,3" />`
         );
         parts.push(
-          `<text x="${padL - 6}" y="${y + 4}" font-size="10" fill="#8a8178" text-anchor="end" font-family="Hanken Grotesque, sans-serif">${t}</text>`
+          `<text x="${padL - 6}" y="${y + 4}" font-size="10" fill="${axisColor}" text-anchor="end" font-family="Hanken Grotesque, sans-serif">${t}</text>`
         );
       });
 
       // X axis baseline
       parts.push(
-        `<line x1="${padL}" y1="${padT + innerH}" x2="${W - padR}" y2="${padT + innerH}" stroke="#00000022" stroke-width="1" />`
+        `<line x1="${padL}" y1="${padT + innerH}" x2="${W - padR}" y2="${padT + innerH}" stroke="${baselineStroke}" stroke-width="1" />`
       );
 
       // Line path
@@ -140,7 +173,7 @@
         const y = yFor(it.totalScore);
         const band = severityFor(it.totalScore);
         parts.push(
-          `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="${band.color}" stroke="white" stroke-width="1.5">
+          `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="${band.color}" stroke="var(--card)" stroke-width="1.5">
              <title>${fmtDate(it.takenAt)} — score ${it.totalScore} (${band.name})</title>
            </circle>`
         );
@@ -148,7 +181,7 @@
           const dt = new Date(it.takenAt);
           const label = `${dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
           parts.push(
-            `<text x="${x.toFixed(1)}" y="${(padT + innerH + 18).toFixed(1)}" font-size="10" fill="#8a8178" text-anchor="middle" font-family="Hanken Grotesque, sans-serif">${label}</text>`
+            `<text x="${x.toFixed(1)}" y="${(padT + innerH + 18).toFixed(1)}" font-size="10" fill="${axisColor}" text-anchor="middle" font-family="Hanken Grotesque, sans-serif">${label}</text>`
           );
         }
 
@@ -157,8 +190,8 @@
           const ny = (y - 16).toFixed(1);
           parts.push(
             `<g class="note-icon" data-note="${escAttr(it.note)}" style="cursor:pointer">` +
-              `<circle cx="${nx}" cy="${ny}" r="7" fill="#5f7d66" stroke="white" stroke-width="1.5"/>` +
-              `<text x="${nx}" y="${ny}" font-size="9" fill="white" text-anchor="middle" dy="3.2" font-family="sans-serif" pointer-events="none">✎</text>` +
+              `<circle cx="${nx}" cy="${ny}" r="7" fill="var(--accent)" stroke="var(--card)" stroke-width="1.5"/>` +
+              `<text x="${nx}" y="${ny}" font-size="9" fill="var(--on-accent)" text-anchor="middle" dy="3.2" font-family="sans-serif" pointer-events="none">✎</text>` +
             `</g>`
           );
         }
@@ -252,6 +285,11 @@
     }
 
     load();
+
+    // Rebuild with theme-correct colors if the auto schedule flips while open.
+    window.addEventListener('willow:theme-change', () => {
+      if (allItems.length) buildChart(allItems);
+    });
   </script>
   <nav class="auth-bar"><a href="/api/logout">Sign out</a></nav>
 </body>

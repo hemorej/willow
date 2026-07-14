@@ -14,7 +14,11 @@
   src: url('/fonts/hanken-grotesk-variable.woff2') format('woff2');
 }
 
-:root {
+/* Sage palette — light (default) and dark. Resolved by theme.js, which sets
+   data-theme="light"|"dark" on <html> based on the Auto/Light/Dark setting
+   and the 7pm-6am auto schedule. */
+:root,
+:root[data-theme="light"] {
   --bg: #f1f2ec;
   --card: #ffffff;
   --text: #272a26;
@@ -23,10 +27,23 @@
   --accent: #5f7d66;
   --accent-hover: #4c6753;
   --accent-soft: #e7ede6;
+  --on-accent: #ffffff;
 
   --font-head: 'Newsreader', Georgia, serif;
   --font-body: 'Hanken Grotesque', system-ui, -apple-system, sans-serif;
   --shadow: 0 1px 2px rgba(0, 0, 0, .03), 0 14px 34px rgba(0, 0, 0, .05);
+}
+
+:root[data-theme="dark"] {
+  --bg: #191c18;
+  --card: #212520;
+  --text: #e7e8e0;
+  --muted: #9a9d91;
+  --border: #333730;
+  --accent: #8ba98f;
+  --accent-hover: #9dbaa1;
+  --accent-soft: #2b312a;
+  --on-accent: #191c18;
 }
 
 * { box-sizing: border-box; }
@@ -37,70 +54,37 @@ body {
   background: var(--bg);
   color: var(--text);
   line-height: 1.5;
+  transition: background .15s ease, color .15s ease;
 }
 
 .container {
-  max-width: 840px;
+  max-width: 920px;
   margin: 0 auto;
-  padding: 48px 24px 96px;
+  padding: 26px 28px 120px;
+  position: relative;
 }
 
 /* ---------------------------------------------------------------------- */
-/* Home                                                                    */
+/* Top bar (persistent on every view)                                      */
 /* ---------------------------------------------------------------------- */
 
-.home-wrap {
-  min-height: calc(100vh - 148px);
+.top-bar {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.home-inner {
-  position: relative;
-}
-
-.home-bg-band {
-  position: absolute;
-  top: -46px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(980px, 100vw);
-  height: 210px;
-  z-index: 0;
-  pointer-events: none;
-  background-image: url('/images/monstera-leaves.jpg');
-  background-repeat: repeat-x;
-  background-size: 320px auto;
-  background-position: center top;
-  opacity: .26;
-  filter: grayscale(1) sepia(.55) hue-rotate(60deg) saturate(1.7) brightness(1.5);
-  mix-blend-mode: multiply;
-}
-
-.home-content {
-  position: relative;
-  z-index: 1;
-}
-
-.home-eyebrow {
-  font: 600 12px var(--font-body);
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin: 0 0 12px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
 }
 
 .wordmark {
   display: flex;
   align-items: center;
-  gap: 11px;
-  margin-bottom: 34px;
+  gap: 10px;
+  text-decoration: none;
 }
 
 .wordmark-icon {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
   border-radius: 10px;
@@ -110,94 +94,367 @@ body {
 }
 
 .wordmark-name {
-  font: 500 26px/1 var(--font-head);
+  font: 500 22px/1 var(--font-head);
   color: var(--text);
   letter-spacing: -.01em;
 }
 
-.home-intro {
-  margin-bottom: 40px;
-}
-
-.home-intro h1 {
-  font: 500 40px/1.15 var(--font-head);
-  margin: 0;
-  color: var(--text);
-  letter-spacing: -.01em;
-}
-
-.home-cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
-  width: min(1040px, 92vw);
-  margin-left: 50%;
-  transform: translateX(-50%);
-}
-
-@media (max-width: 900px) {
-  .home-cards {
-    grid-template-columns: 1fr;
-  }
-}
-
-.home-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 30px;
-  box-shadow: var(--shadow);
+.top-bar-right {
   display: flex;
-  flex-direction: column;
-  min-width: 0;
+  align-items: center;
+  gap: 10px;
 }
 
-.home-card-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 15px;
+.nav-cluster {
+  display: flex;
+  gap: 8px;
+}
+
+.nav-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font: 600 13px var(--font-body);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+  text-decoration: none;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.nav-pill:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.nav-pill.active {
+  border-color: var(--accent);
   background: var(--accent-soft);
   color: var(--accent);
-  display: grid;
-  place-items: center;
-  margin-bottom: 20px;
 }
 
-.home-card h2 {
-  font: 500 21px/1.25 var(--font-head);
-  margin: 0;
-  color: var(--text);
-  white-space: nowrap;
-}
-
-.home-card .actions {
-  gap: 10px;
-  margin-top: auto;
-  padding-top: 22px;
-  flex-wrap: nowrap;
-}
-
-.home-card .actions .btn {
-  flex: 1;
-  height: 44px;
+.theme-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.theme-toggle svg {
+  display: block;
+}
+
+.theme-toggle:hover {
+  background: var(--card);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Journal home — writing surface                                         */
+/* ---------------------------------------------------------------------- */
+
+.journal-home {
+  min-height: calc(100vh - 200px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.journal-home-inner {
+  max-width: 660px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.compose-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 10px;
+}
+
+.date-eyebrow {
+  font: 600 12px var(--font-body);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0;
+}
+
+.gratitude-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font: 600 12px var(--font-body);
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.gratitude-toggle svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+.gratitude-toggle.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* Bare <button>; neutralize the global button:hover fill (see .mood-btn). */
+.gratitude-toggle:hover {
+  background: transparent;
+}
+
+.gratitude-toggle.on:hover {
+  background: var(--accent-soft);
+}
+
+.journal-greeting {
+  font: 500 34px/1.15 var(--font-head);
+  letter-spacing: -.01em;
+  color: var(--text);
+  margin: 0 0 26px;
+}
+
+.journal-textarea {
+  display: block;
+  width: 100%;
+  min-height: 38vh;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  font: 400 27px/1.6 var(--font-head);
+  letter-spacing: -.005em;
+  color: var(--text);
   padding: 0;
 }
 
-.home-card .actions .btn.icon-only {
-  flex: 0 0 44px;
-  width: 44px;
+.journal-textarea::placeholder {
+  color: #a9aaa0;
 }
 
-.home-disclaimer {
-  margin: 32px 2px 0;
+.journal-footer {
+  margin-top: 20px;
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.mood-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mood-btn {
+  display: inline-grid;
+  place-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 5px;
+  cursor: pointer;
   color: var(--muted);
-  font-size: 13px;
-  line-height: 1.5;
-  max-width: 64ch;
+  border-radius: 999px;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.mood-btn svg {
+  display: block;
+}
+
+.mood-btn.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* Mood buttons are bare <button> elements; neutralize the global
+   button:hover background so hovering doesn't fill them solid. */
+.mood-btn:hover {
+  background: transparent;
+}
+
+.mood-btn.selected:hover {
+  background: var(--accent-soft);
+}
+
+.save-entry-btn {
+  height: 46px;
+  padding: 0 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Journal log — entry feed                                               */
+/* ---------------------------------------------------------------------- */
+
+.log-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 18px 0 34px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.log-header h1 {
+  font: 500 30px var(--font-head);
+  margin: 0;
+  color: var(--text);
+}
+
+.day-group {
+  display: flex;
+  gap: 26px;
+  border-top: 1px solid var(--border);
+}
+
+.day-date-col {
+  width: 104px;
+  flex-shrink: 0;
+}
+
+.day-date-inner {
+  position: sticky;
+  top: 22px;
+  padding: 22px 0;
+}
+
+.day-weekday {
+  font: 500 12px var(--font-body);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 4px;
+}
+
+.day-number {
+  font: 500 30px var(--font-head);
+  color: var(--text);
+  margin: 0 0 4px;
+}
+
+.day-number.today {
+  display: inline-grid;
+  place-items: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 22px;
+}
+
+.day-month {
+  font: 500 13px var(--font-body);
+  color: var(--muted);
+  margin: 0;
+}
+
+.day-entries {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 22px 0 30px;
+  min-width: 0;
+}
+
+.entry-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  max-width: 550px;
+}
+
+.entry-mood-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+.entry-bubble {
+  flex: 1;
+  min-width: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px 16px 16px 16px;
+  padding: 15px 19px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .03);
+  font: 400 18px/1.35 var(--font-head);
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
+.entry-bubble.gratitude {
+  background: var(--accent-soft);
+  box-shadow: none;
+}
+
+.gratitude-caption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 7px;
+  color: var(--accent);
+  font: 600 11px var(--font-body);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.gratitude-caption svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+.entry-mood-only {
+  align-self: center;
+  font: 400 15px var(--font-body);
+  color: var(--muted);
+}
+
+.log-empty {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.log-empty p {
+  font: 400 19px var(--font-head);
+  color: var(--text);
+  margin: 0 0 20px;
+}
+
+@media (max-width: 640px) {
+  .day-date-col {
+    width: 64px;
+  }
 }
 
 /* ---------------------------------------------------------------------- */
@@ -277,7 +534,7 @@ h2 { margin-top: 0; }
 button, .btn {
   display: inline-block;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   border: 1px solid var(--accent);
   padding: 11px 20px;
   border-radius: 11px;
@@ -507,8 +764,8 @@ button:disabled, .btn:disabled {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #5f7d66;
-  color: white;
+  background: var(--accent);
+  color: var(--on-accent);
   font-size: 9px;
   line-height: 1;
   flex-shrink: 0;
@@ -716,7 +973,7 @@ input[type="range"] {
   border: 2px solid var(--border);
   background: transparent;
   transition: all .15s ease;
-  color: #fff;
+  color: var(--on-accent);
   font-size: 12px;
   line-height: 1;
 }

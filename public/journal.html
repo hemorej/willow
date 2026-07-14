@@ -2,25 +2,247 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <script src="/theme.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Willow — Journal &amp; Mood</title>
+  <title>Willow — Journal</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="apple-touch-icon" href="/favicon.svg" />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <div class="container">
-    <div class="card saved">
-      <div class="saved-icon">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19a1 1 0 0 1 1 1v14.5"/><path d="M6.5 17H20a1 1 0 0 1 0 2H6.5A2.5 2.5 0 0 1 4 16.5v-11"/><path d="M9 8h7"/><path d="M9 11.5h5"/></svg>
+    <header class="top-bar">
+      <a class="wordmark" href="/">
+        <span class="wordmark-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c0-7 3-13 11-16-1 8-4 13-11 16z"/><path d="M8.5 15.5C11 13 13 9.5 15 4"/></svg>
+        </span>
+        <span class="wordmark-name">Willow</span>
+      </a>
+      <div class="top-bar-right">
+        <nav class="nav-cluster">
+          <a class="nav-pill active" href="/journal.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v18H6.5A2.5 2.5 0 0 1 4 18.5v-13z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v18h5.5a2.5 2.5 0 0 0 2.5-2.5v-13z"/></svg>
+            Log
+          </a>
+          <a class="nav-pill" href="/quiz.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 4-6"/></svg>
+            BDI
+          </a>
+          <a class="nav-pill" href="/cbt.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            CBT
+          </a>
+        </nav>
+        <button id="theme-toggle" class="theme-toggle" type="button"></button>
       </div>
-      <h2>Your journal is on the way</h2>
-      <p class="result-explainer" style="margin:0 auto;text-align:center">Soon you'll be able to write a few lines each day and mark how you're feeling — then look back and see your mood over time, right alongside your check-ins.</p>
-      <div class="actions centered">
-        <a class="btn secondary" href="/">Back to home</a>
-      </div>
+    </header>
+
+    <div class="log-header">
+      <h1>Journal</h1>
+      <a class="btn" href="/">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-3px;margin-right:6px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Write
+      </a>
+    </div>
+
+    <div id="log-body">
+      <p class="skeleton">Loading…</p>
+    </div>
+
+    <div class="pager" id="pager" style="display:none">
+      <button class="secondary" id="pager-prev" type="button">← Newer</button>
+      <span class="pager-label" id="pager-label"></span>
+      <button class="secondary" id="pager-next" type="button">Older →</button>
     </div>
   </div>
+
+  <script src="/moods.js"></script>
+  <script src="/gratitude.js"></script>
+  <script>
+    function localDateFromISO(iso) {
+      const [y, m, d] = iso.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function todayISO() {
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    }
+
+    function renderEmpty() {
+      const body = document.getElementById('log-body');
+      body.innerHTML = '';
+      const wrap = document.createElement('div');
+      wrap.className = 'log-empty';
+      const p = document.createElement('p');
+      p.textContent = 'Nothing here yet.';
+      const btn = document.createElement('a');
+      btn.className = 'btn';
+      btn.href = '/';
+      btn.textContent = 'Write your first entry';
+      wrap.appendChild(p);
+      wrap.appendChild(btn);
+      body.appendChild(wrap);
+    }
+
+    function renderEntries(entries) {
+      const body = document.getElementById('log-body');
+      body.innerHTML = '';
+
+      if (!entries.length) {
+        renderEmpty();
+        return;
+      }
+
+      const today = todayISO();
+
+      // Entries already arrive sorted by date desc, order desc — group in that order.
+      const groups = [];
+      let currentGroup = null;
+      entries.forEach((e) => {
+        if (!currentGroup || currentGroup.date !== e.date) {
+          currentGroup = { date: e.date, entries: [] };
+          groups.push(currentGroup);
+        }
+        currentGroup.entries.push(e);
+      });
+
+      groups.forEach((group) => {
+        const d = localDateFromISO(group.date);
+        const isToday = group.date === today;
+
+        const row = document.createElement('div');
+        row.className = 'day-group';
+
+        const dateCol = document.createElement('div');
+        dateCol.className = 'day-date-col';
+        const dateInner = document.createElement('div');
+        dateInner.className = 'day-date-inner';
+
+        const weekday = document.createElement('p');
+        weekday.className = 'day-weekday';
+        weekday.textContent = isToday ? 'Today' : d.toLocaleDateString(undefined, { weekday: 'short' });
+
+        const dayNum = document.createElement('p');
+        dayNum.className = 'day-number' + (isToday ? ' today' : '');
+        dayNum.textContent = String(d.getDate());
+
+        const month = document.createElement('p');
+        month.className = 'day-month';
+        month.textContent = d.toLocaleDateString(undefined, { month: 'short' })
+          + (d.getFullYear() !== new Date().getFullYear() ? ' ' + d.getFullYear() : '');
+
+        dateInner.appendChild(weekday);
+        dateInner.appendChild(dayNum);
+        dateInner.appendChild(month);
+        dateCol.appendChild(dateInner);
+
+        const entriesCol = document.createElement('div');
+        entriesCol.className = 'day-entries';
+
+        group.entries.forEach((e) => {
+          const entryRow = document.createElement('div');
+          entryRow.className = 'entry-row';
+
+          const hasMood = e.mood !== null && e.mood !== undefined;
+          const hasText = e.text && String(e.text).trim();
+
+          if (hasMood) {
+            const face = document.createElement('span');
+            face.className = 'entry-mood-icon';
+            face.innerHTML = moodFaceSvg(e.mood, 36);
+            entryRow.appendChild(face);
+          }
+
+          if (hasText) {
+            const grat = !!e.gratitude;
+            const bubble = document.createElement('div');
+            bubble.className = 'entry-bubble' + (grat ? ' gratitude' : '');
+
+            if (grat) {
+              const caption = document.createElement('div');
+              caption.className = 'gratitude-caption';
+              caption.innerHTML = sproutSvg(14);
+              const tag = document.createElement('span');
+              tag.textContent = e.gratitudeTag || 'Grateful for';
+              caption.appendChild(tag);
+              bubble.appendChild(caption);
+            }
+
+            const textEl = document.createElement('div');
+            textEl.textContent = e.text;
+            bubble.appendChild(textEl);
+
+            entryRow.appendChild(bubble);
+          } else if (hasMood) {
+            const line = document.createElement('div');
+            line.className = 'entry-mood-only';
+            line.textContent = `Checked in — feeling ${MOODS[e.mood].name}`;
+            entryRow.appendChild(line);
+          }
+
+          entriesCol.appendChild(entryRow);
+        });
+
+        row.appendChild(dateCol);
+        row.appendChild(entriesCol);
+        body.appendChild(row);
+      });
+    }
+
+    const PER_PAGE = 10;
+    let allEntries = [];
+    let page = 0;
+
+    const pager = document.getElementById('pager');
+    const pagerLabel = document.getElementById('pager-label');
+    const pagerPrev = document.getElementById('pager-prev');
+    const pagerNext = document.getElementById('pager-next');
+
+    function renderPage() {
+      const totalPages = Math.max(1, Math.ceil(allEntries.length / PER_PAGE));
+      page = Math.min(page, totalPages - 1);
+      const start = page * PER_PAGE;
+      const pageItems = allEntries.slice(start, start + PER_PAGE);
+
+      renderEntries(pageItems);
+
+      if (totalPages > 1) {
+        pager.style.display = '';
+        pagerLabel.textContent = `${start + 1}–${start + pageItems.length} of ${allEntries.length}`;
+        pagerPrev.disabled = page === 0;
+        pagerNext.disabled = page >= totalPages - 1;
+      } else {
+        pager.style.display = 'none';
+      }
+    }
+
+    pagerPrev.addEventListener('click', () => {
+      if (page > 0) { page -= 1; renderPage(); window.scrollTo({ top: 0 }); }
+    });
+    pagerNext.addEventListener('click', () => {
+      const totalPages = Math.max(1, Math.ceil(allEntries.length / PER_PAGE));
+      if (page < totalPages - 1) { page += 1; renderPage(); window.scrollTo({ top: 0 }); }
+    });
+
+    fetch('/api/journal/entries')
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.ok) throw new Error(data.error || 'Failed to load');
+        allEntries = data.entries;
+        page = 0;
+        renderPage();
+      })
+      .catch((e) => {
+        const body = document.getElementById('log-body');
+        body.innerHTML = '';
+        const err = document.createElement('div');
+        err.className = 'error';
+        err.textContent = 'Could not load journal: ' + e.message;
+        body.appendChild(err);
+      });
+  </script>
   <nav class="auth-bar"><a href="/api/logout">Sign out</a></nav>
 </body>
 </html>

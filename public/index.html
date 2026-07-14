@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <script src="/theme.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Willow</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -10,74 +11,184 @@
 </head>
 <body>
   <div class="container">
-    <div class="home-wrap">
-      <div class="home-inner">
-      <div class="home-bg-band" aria-hidden="true"></div>
-      <div class="home-content">
-      <div class="wordmark">
+    <header class="top-bar">
+      <a class="wordmark" href="/">
         <span class="wordmark-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c0-7 3-13 11-16-1 8-4 13-11 16z"/><path d="M8.5 15.5C11 13 13 9.5 15 4"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c0-7 3-13 11-16-1 8-4 13-11 16z"/><path d="M8.5 15.5C11 13 13 9.5 15 4"/></svg>
         </span>
         <span class="wordmark-name">Willow</span>
+      </a>
+      <div class="top-bar-right">
+        <nav class="nav-cluster">
+          <a class="nav-pill" href="/journal.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v18H6.5A2.5 2.5 0 0 1 4 18.5v-13z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v18h5.5a2.5 2.5 0 0 0 2.5-2.5v-13z"/></svg>
+            Log
+          </a>
+          <a class="nav-pill" href="/quiz.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 4-6"/></svg>
+            BDI
+          </a>
+          <a class="nav-pill" href="/cbt.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            CBT
+          </a>
+        </nav>
+        <button id="theme-toggle" class="theme-toggle" type="button"></button>
       </div>
+    </header>
 
-      <div class="home-intro">
-        <h1>A quiet place to check in with yourself.</h1>
-      </div>
-
-      <div class="home-cards">
-        <div class="home-card">
-          <div class="home-card-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 4-6"/></svg>
-          </div>
-          <h2>Beck Depression Inventory</h2>
-          <div class="actions">
-            <a class="btn" href="/quiz.html" title="New test" aria-label="New test">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              New
-            </a>
-            <a class="btn secondary icon-only" href="/results.html" title="View past results" aria-label="View past results">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="8" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>
-            </a>
-          </div>
+    <div class="journal-home">
+      <div class="journal-home-inner">
+        <div class="compose-header-row">
+          <p class="date-eyebrow" id="date-eyebrow"></p>
+          <button type="button" class="gratitude-toggle" id="gratitude-toggle" title="Answer a gratitude prompt">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12c0-3 2-5 6-5 0 3-2 5-6 5z"/><path d="M12 14c0-3-2-5-6-5 0 3 2 5 6 5z"/></svg>
+            <span>Gratitude</span>
+          </button>
         </div>
+        <h1 class="journal-greeting" id="greeting"></h1>
 
-        <div class="home-card">
-          <div class="home-card-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-          </div>
-          <h2>CBT Thought Record</h2>
-          <div class="actions">
-            <a class="btn" href="/cbt.html" title="New thought record" aria-label="New thought record">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              New
-            </a>
-            <a class="btn secondary icon-only" href="/cbt.html#list" title="View past entries" aria-label="View past entries">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="8" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>
-            </a>
-          </div>
-        </div>
+        <textarea
+          id="draft"
+          class="journal-textarea"
+          placeholder="Start writing. Whatever comes."
+        ></textarea>
 
-        <div class="home-card">
-          <div class="home-card-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19a1 1 0 0 1 1 1v14.5"/><path d="M6.5 17H20a1 1 0 0 1 0 2H6.5A2.5 2.5 0 0 1 4 16.5v-11"/><path d="M9 8h7"/><path d="M9 11.5h5"/></svg>
-          </div>
-          <h2>Journal &amp; Mood</h2>
-          <div class="actions">
-            <a class="btn" href="/journal.html" title="Write an entry" aria-label="Write an entry">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              New
-            </a>
-            <a class="btn secondary icon-only" href="/journal.html" title="View journal" aria-label="View journal">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="8" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>
-            </a>
-          </div>
+        <div class="journal-footer">
+          <div class="mood-row" id="mood-row"></div>
+          <button class="btn save-entry-btn" id="save-btn" disabled>Save entry</button>
         </div>
-      </div>
-      </div>
       </div>
     </div>
   </div>
+
+  <script src="/moods.js"></script>
+  <script src="/gratitude.js"></script>
+  <script>
+    let _csrfToken = null;
+    async function getCsrfToken() {
+      if (!_csrfToken) {
+        const r = await fetch('/api/csrf-token');
+        const d = await r.json();
+        _csrfToken = d.csrfToken;
+      }
+      return _csrfToken;
+    }
+
+    const PROMPTS = {
+      morning: [
+        "How are you this morning?",
+        "What did you wake up with today?",
+        "How does the day feel from here?",
+        "What would make today feel kind to yourself?",
+        "What's the first thing on your mind?",
+      ],
+      afternoon: [
+        "How are you feeling today?",
+        "What's taking up space in your head?",
+        "How has the day treated you so far?",
+        "What do you notice in your body right now?",
+        "What's here for you this afternoon?",
+      ],
+      evening: [
+        "How was your day?",
+        "What stayed with you today?",
+        "What are you carrying into the evening?",
+        "What went softer than you expected?",
+        "What would you like to set down before bed?",
+      ],
+      night: [
+        "Still up? How are you feeling?",
+        "What's keeping you company tonight?",
+        "What's on your mind this late?",
+        "What do you need before you rest?",
+        "How is your heart right now?",
+      ],
+    };
+
+    function partOfDay(hour) {
+      if (hour < 5) return 'night';
+      if (hour < 12) return 'morning';
+      if (hour < 18) return 'afternoon';
+      return 'evening';
+    }
+
+    const now = new Date();
+    document.getElementById('date-eyebrow').textContent =
+      now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).toUpperCase();
+
+    const pool = PROMPTS[partOfDay(now.getHours())];
+    const seed = Math.floor(Math.random() * 997);
+    const regularGreeting = pool[seed % pool.length];
+    const greetingEl = document.getElementById('greeting');
+    greetingEl.textContent = regularGreeting;
+
+    const FOCUSED_PLACEHOLDER = 'Start writing. Whatever comes.';
+    const FOCUSED_PLACEHOLDER_GRATITUDE = 'Name it, big or small…';
+
+    // Gratitude toggle
+    let gratitudeOn = false;
+    let gratIdx = 0;
+    const gratToggle = document.getElementById('gratitude-toggle');
+    gratToggle.addEventListener('click', () => {
+      gratitudeOn = !gratitudeOn;
+      if (gratitudeOn) gratIdx = Math.floor(Math.random() * GRATITUDE_PROMPTS.length);
+      gratToggle.classList.toggle('on', gratitudeOn);
+      greetingEl.textContent = gratitudeOn ? GRATITUDE_PROMPTS[gratIdx].prompt : regularGreeting;
+      draft.placeholder = gratitudeOn ? FOCUSED_PLACEHOLDER_GRATITUDE : FOCUSED_PLACEHOLDER;
+    });
+
+    // Mood row
+    let selectedMood = null;
+    const moodRow = document.getElementById('mood-row');
+    const moodButtons = [];
+    MOODS.forEach((m, i) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'mood-btn';
+      btn.setAttribute('aria-label', m.name);
+      btn.title = m.name;
+      btn.innerHTML = moodFaceSvg(i, 30);
+      btn.addEventListener('click', () => {
+        selectedMood = selectedMood === i ? null : i;
+        moodButtons.forEach((b, j) => b.classList.toggle('selected', j === selectedMood));
+        updateSaveState();
+      });
+      moodRow.appendChild(btn);
+      moodButtons.push(btn);
+    });
+
+    // Draft textarea (uncontrolled, avoids re-render on every keystroke)
+    const draft = document.getElementById('draft');
+    const saveBtn = document.getElementById('save-btn');
+    draft.addEventListener('input', updateSaveState);
+
+    function updateSaveState() {
+      saveBtn.disabled = !(draft.value.trim() || selectedMood !== null);
+    }
+
+    saveBtn.addEventListener('click', async () => {
+      const text = draft.value.trim();
+      if (!text && selectedMood === null) return;
+      saveBtn.disabled = true;
+
+      const pad = n => String(n).padStart(2, '0');
+      const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+
+      const gratitudeTag = gratitudeOn ? GRATITUDE_PROMPTS[gratIdx].tag : null;
+
+      try {
+        await fetch('/api/journal/entries', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': await getCsrfToken() },
+          body: JSON.stringify({ date, text: text || null, mood: selectedMood, gratitude: gratitudeOn, gratitudeTag }),
+        });
+      } catch (e) {
+        console.error('save failed', e);
+      }
+      location.href = '/journal.html';
+    });
+  </script>
   <nav class="auth-bar"><a href="/api/logout">Sign out</a></nav>
 </body>
 </html>

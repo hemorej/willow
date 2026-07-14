@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 
 const express = require('express');
 const fs = require('fs');
@@ -84,7 +84,7 @@ app.use(session({
   }
 }));
 
-const PUBLIC_PATHS = new Set(['/login', '/login.html', '/style.css', '/favicon.svg', '/robots.txt']);
+const PUBLIC_PATHS = new Set(['/login', '/login.html', '/style.css', '/theme.js', '/favicon.svg', '/robots.txt']);
 
 function requireAuth(req, res, next) {
   if (PUBLIC_PATHS.has(req.path) || req.path.startsWith('/fonts/')) return next();
@@ -257,6 +257,79 @@ app.get('/api/cbt/entries/:filename', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ ok: false, error: 'Failed to read entry' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Journal routes
+// ---------------------------------------------------------------------------
+
+const JOURNAL_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+// Kept in sync with public/gratitude.js — used to validate that a saved
+// gratitude tag actually corresponds to one of the rotating prompts.
+const GRATITUDE_TAGS = new Set([
+  'Something I savoured',
+  "Something I'm proud of",
+  "Something I'm looking forward to",
+  'Something that made me smile',
+  'What made today good',
+  'A kindness I received',
+  "Someone I'm thankful for",
+  'A small comfort',
+  'Something that went well',
+  'Something that felt like a gift',
+  "Something I'm glad to have",
+  'Beauty I noticed'
+]);
+
+app.post('/api/journal/entries', validateCsrf, async (req, res) => {
+  const body = req.body || {};
+  const text = typeof body.text === 'string' ? body.text.trim() : '';
+  const mood = Number.isInteger(body.mood) && body.mood >= 0 && body.mood <= 4 ? body.mood : null;
+  const date = typeof body.date === 'string' && JOURNAL_DATE.test(body.date) ? body.date : null;
+  const gratitude = body.gratitude === true;
+  const gratitudeTag = gratitude && typeof body.gratitudeTag === 'string' && GRATITUDE_TAGS.has(body.gratitudeTag)
+    ? body.gratitudeTag
+    : null;
+
+  if (!date) return res.status(400).json({ error: 'A valid date (YYYY-MM-DD) is required' });
+  if (!text && mood === null) return res.status(400).json({ error: 'Write something or pick a mood' });
+
+  const order = Date.now();
+  const id = `journal-${order}-${crypto.randomBytes(4).toString('hex')}`;
+  const record = { id, date, order, text: text || null, mood, gratitude, gratitudeTag };
+
+  try {
+    await pool.query(
+      'INSERT INTO journal_entries (id, entry_date, entry_order, mood, body, gratitude, gratitude_tag, data) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+      [id, date, order, mood, text || null, gratitude, gratitudeTag, record]
+    );
+    res.json({ ok: true, entry: record });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to save entry' });
+  }
+});
+
+app.get('/api/journal/entries', async (_req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, entry_date, entry_order, mood, body, gratitude, gratitude_tag FROM journal_entries ORDER BY entry_date DESC, entry_order DESC'
+    );
+    const entries = rows.map((r) => ({
+      id: r.id,
+      date: r.entry_date.toISOString().slice(0, 10),
+      order: Number(r.entry_order),
+      text: r.body,
+      mood: r.mood,
+      gratitude: r.gratitude,
+      gratitudeTag: r.gratitude_tag
+    }));
+    res.json({ ok: true, entries });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, error: 'Failed to read entries' });
   }
 });
 

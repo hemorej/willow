@@ -1,11 +1,12 @@
 # Willow
 
-A small web app bundling two evidence-based self-report tools:
+A small, private journaling app with two secondary self-care tools:
 
+- **Journal** — a daily mood check-in and free-writing entry, with a reverse-chronological log of past entries.
 - **BDI-II Inventory** — a Beck Depression Inventory (BDI-II) self-report.
 - **CBT Thought Record** — a guided 14-step cognitive-behavioral therapy exercise.
 
-Results are stored in a PostgreSQL database. Access is protected by a login form.
+Data is stored in a PostgreSQL database. Access is protected by a login form.
 
 ## Stack
 

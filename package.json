@@ -10,7 +10,8 @@
         "stop": "brew services stop postgresql@18",
         "build": "node scripts/build.js",
         "create-user": "node scripts/create-user.js",
-        "import": "node scripts/import.js"
+        "import": "node scripts/import.js",
+        "import-history": "node scripts/import-history.js"
     },
     "dependencies": {
         "bcryptjs": "^3.0.3",
