@@ -14,7 +14,11 @@
   src: url('/fonts/hanken-grotesk-variable.woff2') format('woff2');
 }
 
-:root {
+/* Sage palette — light (default) and dark. Resolved by theme.js, which sets
+   data-theme="light"|"dark" on <html> based on the Auto/Light/Dark setting
+   and the 7pm-6am auto schedule. */
+:root,
+:root[data-theme="light"] {
   --bg: #f1f2ec;
   --card: #ffffff;
   --text: #272a26;
@@ -23,10 +27,23 @@
   --accent: #5f7d66;
   --accent-hover: #4c6753;
   --accent-soft: #e7ede6;
+  --on-accent: #ffffff;
 
   --font-head: 'Newsreader', Georgia, serif;
   --font-body: 'Hanken Grotesque', system-ui, -apple-system, sans-serif;
   --shadow: 0 1px 2px rgba(0, 0, 0, .03), 0 14px 34px rgba(0, 0, 0, .05);
+}
+
+:root[data-theme="dark"] {
+  --bg: #191c18;
+  --card: #212520;
+  --text: #e7e8e0;
+  --muted: #9a9d91;
+  --border: #333730;
+  --accent: #8ba98f;
+  --accent-hover: #9dbaa1;
+  --accent-soft: #2b312a;
+  --on-accent: #191c18;
 }
 
 * { box-sizing: border-box; }
@@ -37,6 +54,7 @@ body {
   background: var(--bg);
   color: var(--text);
   line-height: 1.5;
+  transition: background .15s ease, color .15s ease;
 }
 
 .container {
@@ -81,6 +99,12 @@ body {
   letter-spacing: -.01em;
 }
 
+.top-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .nav-cluster {
   display: flex;
   gap: 8px;
@@ -108,6 +132,32 @@ body {
 .nav-pill.active {
   border-color: var(--accent);
   background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.theme-toggle svg {
+  display: block;
+}
+
+.theme-toggle:hover {
+  background: var(--card);
+  border-color: var(--accent);
   color: var(--accent);
 }
 
@@ -318,7 +368,7 @@ body {
   padding: 0 8px;
   border-radius: 999px;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font-size: 22px;
 }
 
@@ -483,7 +533,7 @@ h2 { margin-top: 0; }
 button, .btn {
   display: inline-block;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   border: 1px solid var(--accent);
   padding: 11px 20px;
   border-radius: 11px;
@@ -713,8 +763,8 @@ button:disabled, .btn:disabled {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #5f7d66;
-  color: white;
+  background: var(--accent);
+  color: var(--on-accent);
   font-size: 9px;
   line-height: 1;
   flex-shrink: 0;
@@ -922,7 +972,7 @@ input[type="range"] {
   border: 2px solid var(--border);
   background: transparent;
   transition: all .15s ease;
-  color: #fff;
+  color: var(--on-accent);
   font-size: 12px;
   line-height: 1;
 }

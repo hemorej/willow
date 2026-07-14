@@ -84,7 +84,7 @@ app.use(session({
   }
 }));
 
-const PUBLIC_PATHS = new Set(['/login', '/login.html', '/style.css', '/favicon.svg', '/robots.txt']);
+const PUBLIC_PATHS = new Set(['/login', '/login.html', '/style.css', '/theme.js', '/favicon.svg', '/robots.txt']);
 
 function requireAuth(req, res, next) {
   if (PUBLIC_PATHS.has(req.path) || req.path.startsWith('/fonts/')) return next();
