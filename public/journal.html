@@ -48,6 +48,12 @@
     <div id="log-body">
       <p class="skeleton">Loading…</p>
     </div>
+
+    <div class="pager" id="pager" style="display:none">
+      <button class="secondary" id="pager-prev" type="button">← Newer</button>
+      <span class="pager-label" id="pager-label"></span>
+      <button class="secondary" id="pager-next" type="button">Older →</button>
+    </div>
   </div>
 
   <script src="/moods.js"></script>
@@ -129,6 +135,14 @@
         dateInner.appendChild(weekday);
         dateInner.appendChild(dayNum);
         dateInner.appendChild(month);
+
+        if (d.getFullYear() !== new Date().getFullYear()) {
+          const year = document.createElement('p');
+          year.className = 'day-year';
+          year.textContent = String(d.getFullYear());
+          dateInner.appendChild(year);
+        }
+
         dateCol.appendChild(dateInner);
 
         const entriesCol = document.createElement('div');
@@ -184,11 +198,48 @@
       });
     }
 
+    const PER_PAGE = 10;
+    let allEntries = [];
+    let page = 0;
+
+    const pager = document.getElementById('pager');
+    const pagerLabel = document.getElementById('pager-label');
+    const pagerPrev = document.getElementById('pager-prev');
+    const pagerNext = document.getElementById('pager-next');
+
+    function renderPage() {
+      const totalPages = Math.max(1, Math.ceil(allEntries.length / PER_PAGE));
+      page = Math.min(page, totalPages - 1);
+      const start = page * PER_PAGE;
+      const pageItems = allEntries.slice(start, start + PER_PAGE);
+
+      renderEntries(pageItems);
+
+      if (totalPages > 1) {
+        pager.style.display = '';
+        pagerLabel.textContent = `${start + 1}–${start + pageItems.length} of ${allEntries.length}`;
+        pagerPrev.disabled = page === 0;
+        pagerNext.disabled = page >= totalPages - 1;
+      } else {
+        pager.style.display = 'none';
+      }
+    }
+
+    pagerPrev.addEventListener('click', () => {
+      if (page > 0) { page -= 1; renderPage(); window.scrollTo({ top: 0 }); }
+    });
+    pagerNext.addEventListener('click', () => {
+      const totalPages = Math.max(1, Math.ceil(allEntries.length / PER_PAGE));
+      if (page < totalPages - 1) { page += 1; renderPage(); window.scrollTo({ top: 0 }); }
+    });
+
     fetch('/api/journal/entries')
       .then((r) => r.json())
       .then((data) => {
         if (!data.ok) throw new Error(data.error || 'Failed to load');
-        renderEntries(data.entries);
+        allEntries = data.entries;
+        page = 0;
+        renderPage();
       })
       .catch((e) => {
         const body = document.getElementById('log-body');

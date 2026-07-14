@@ -378,11 +378,17 @@ body {
   margin: 0;
 }
 
+.day-year {
+  font: 500 12px var(--font-body);
+  color: var(--muted);
+  margin: 2px 0 0;
+}
+
 .day-entries {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 8px;
   padding: 22px 0 30px;
   min-width: 0;
 }
@@ -391,6 +397,7 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 14px;
+  max-width: 550px;
 }
 
 .entry-mood-icon {
@@ -407,7 +414,7 @@ body {
   border-radius: 4px 16px 16px 16px;
   padding: 15px 19px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, .03);
-  font: 400 18px/1.55 var(--font-head);
+  font: 400 18px/1.35 var(--font-head);
   color: var(--text);
   white-space: pre-wrap;
 }
