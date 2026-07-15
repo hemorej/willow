@@ -483,6 +483,20 @@ body {
   .day-date-col {
     width: 64px;
   }
+
+  .entry-row {
+    max-width: none;
+    gap: 10px;
+  }
+
+  .entry-mood-icon {
+    opacity: .5;
+  }
+
+  .entry-mood-icon svg {
+    width: 26px;
+    height: 26px;
+  }
 }
 
 /* ---------------------------------------------------------------------- */
