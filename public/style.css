@@ -466,12 +466,13 @@ body {
   }
 
   .day-date-col {
-    width: 88px;
+    width: 60px;
   }
 
   .day-date-inner {
     flex-wrap: wrap;
     white-space: normal;
+    row-gap: 2px;
   }
 
   .day-weekday,
