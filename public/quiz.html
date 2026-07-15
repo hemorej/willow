@@ -45,8 +45,7 @@
         <h1>BDI-II Inventory</h1>
       </div>
       <div class="header-action">
-        <a class="btn secondary" href="/quiz.html" id="header-back-to-start">Back to start</a>
-        <a class="text-link" href="/results.html">View past results →</a>
+        <a class="text-link" href="/results.html">View past entries →</a>
       </div>
     </header>
 
@@ -86,7 +85,7 @@
       <p class="result-saved-as" id="result-saved-as"></p>
       <div class="actions">
         <a class="btn" href="/quiz.html">Take it again</a>
-        <a class="btn secondary" href="/results.html">View past results</a>
+        <a class="btn secondary" href="/results.html">View past entries</a>
       </div>
       <p class="disclaimer">
         This screening tool is informational, not a clinical diagnosis. If you
@@ -233,7 +232,6 @@
 
       // Show result screen
       document.getElementById('quiz-card').style.display = 'none';
-      document.getElementById('header-back-to-start').style.display = 'none';
       const resCard = document.getElementById('result-card');
       resCard.style.display = '';
       document.getElementById('result-score').textContent = String(totalScore);
