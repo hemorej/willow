@@ -135,32 +135,6 @@ body {
   color: var(--accent);
 }
 
-.theme-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  padding: 0;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--card);
-  color: var(--muted);
-  cursor: pointer;
-  transition: background .15s ease, border-color .15s ease, color .15s ease;
-}
-
-.theme-toggle svg {
-  display: block;
-}
-
-.theme-toggle:hover {
-  background: var(--card);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
 @media (max-width: 560px) {
   .top-bar {
     flex-wrap: wrap;
