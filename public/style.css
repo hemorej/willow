@@ -335,12 +335,6 @@ body {
   flex-wrap: wrap;
 }
 
-.log-header h1 {
-  font: 500 30px var(--font-head);
-  margin: 0;
-  color: var(--text);
-}
-
 .day-group {
   display: flex;
   gap: 26px;
@@ -348,7 +342,7 @@ body {
 }
 
 .day-date-col {
-  width: 104px;
+  width: 176px;
   flex-shrink: 0;
 }
 
@@ -356,36 +350,41 @@ body {
   position: sticky;
   top: 22px;
   padding: 22px 0;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
 }
 
 .day-weekday {
-  font: 500 12px var(--font-body);
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  order: 1;
+  font: 500 14px var(--font-body);
   color: var(--muted);
-  margin: 0 0 4px;
-}
-
-.day-number {
-  font: 500 30px var(--font-head);
-  color: var(--text);
-  margin: 0 0 4px;
-}
-
-.day-number.today {
-  display: inline-grid;
-  place-items: center;
-  min-width: 40px;
-  height: 40px;
-  padding: 0 8px;
-  border-radius: 999px;
-  background: var(--accent);
-  color: var(--on-accent);
-  font-size: 22px;
+  margin: 0;
 }
 
 .day-month {
-  font: 500 13px var(--font-body);
+  order: 2;
+  font: 500 14px var(--font-body);
+  color: var(--muted);
+  margin: 0;
+}
+
+.day-number {
+  order: 3;
+  font: 500 15px var(--font-head);
+  color: var(--text);
+  margin: 0;
+}
+
+.day-number.today {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.day-year {
+  order: 4;
+  font: 500 14px var(--font-body);
   color: var(--muted);
   margin: 0;
 }
@@ -394,7 +393,7 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
   padding: 22px 0 30px;
   min-width: 0;
 }
@@ -402,32 +401,30 @@ body {
 .entry-row {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: 16px;
   max-width: 550px;
 }
 
 .entry-mood-icon {
   flex-shrink: 0;
+  width: 28px;
+  height: 28px;
   margin-top: 2px;
-  color: var(--accent);
+  color: var(--muted);
 }
 
 .entry-bubble {
   flex: 1;
   min-width: 0;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 4px 16px 16px 16px;
-  padding: 15px 19px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, .03);
-  font: 400 18px/1.35 var(--font-head);
-  color: var(--text);
-  white-space: pre-wrap;
-}
-
-.entry-bubble.gratitude {
-  background: var(--accent-soft);
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
   box-shadow: none;
+  font: 400 20px/1.7 var(--font-head);
+  color: var(--text);
+  letter-spacing: -.005em;
+  white-space: pre-wrap;
 }
 
 .gratitude-caption {
@@ -469,25 +466,22 @@ body {
   }
 
   .day-date-col {
-    width: 52px;
+    width: 88px;
   }
 
-  .day-weekday {
-    font-size: 10px;
+  .day-date-inner {
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+
+  .day-weekday,
+  .day-month,
+  .day-year {
+    font-size: 12px;
   }
 
   .day-number {
-    font-size: 24px;
-  }
-
-  .day-number.today {
-    min-width: 32px;
-    height: 32px;
-    font-size: 17px;
-  }
-
-  .day-month {
-    font-size: 11px;
+    font-size: 13px;
   }
 
   .entry-row {
@@ -496,12 +490,18 @@ body {
   }
 
   .entry-mood-icon {
+    width: 22px;
+    height: 22px;
     opacity: .5;
   }
 
   .entry-mood-icon svg {
     width: 22px;
     height: 22px;
+  }
+
+  .entry-bubble {
+    font-size: 17px;
   }
 }
 

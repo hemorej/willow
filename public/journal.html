@@ -121,22 +121,26 @@
         const dateInner = document.createElement('div');
         dateInner.className = 'day-date-inner';
 
-        const weekday = document.createElement('p');
+        const weekday = document.createElement('span');
         weekday.className = 'day-weekday';
-        weekday.textContent = isToday ? 'Today' : d.toLocaleDateString(undefined, { weekday: 'short' });
+        weekday.textContent = (isToday ? 'Today' : d.toLocaleDateString(undefined, { weekday: 'short' })) + ',';
 
-        const dayNum = document.createElement('p');
+        const month = document.createElement('span');
+        month.className = 'day-month';
+        month.textContent = d.toLocaleDateString(undefined, { month: 'short' });
+
+        const dayNum = document.createElement('span');
         dayNum.className = 'day-number' + (isToday ? ' today' : '');
         dayNum.textContent = String(d.getDate());
 
-        const month = document.createElement('p');
-        month.className = 'day-month';
-        month.textContent = d.toLocaleDateString(undefined, { month: 'short' })
-          + (d.getFullYear() !== new Date().getFullYear() ? ' ' + d.getFullYear() : '');
+        const year = document.createElement('span');
+        year.className = 'day-year';
+        year.textContent = String(d.getFullYear());
 
         dateInner.appendChild(weekday);
-        dateInner.appendChild(dayNum);
         dateInner.appendChild(month);
+        dateInner.appendChild(dayNum);
+        dateInner.appendChild(year);
         dateCol.appendChild(dateInner);
 
         const entriesCol = document.createElement('div');
@@ -152,14 +156,14 @@
           if (hasMood) {
             const face = document.createElement('span');
             face.className = 'entry-mood-icon';
-            face.innerHTML = moodFaceSvg(e.mood, 36);
+            face.innerHTML = moodFaceSvg(e.mood, 28);
             entryRow.appendChild(face);
           }
 
           if (hasText) {
             const grat = !!e.gratitude;
             const bubble = document.createElement('div');
-            bubble.className = 'entry-bubble' + (grat ? ' gratitude' : '');
+            bubble.className = 'entry-bubble';
 
             if (grat) {
               const caption = document.createElement('div');
