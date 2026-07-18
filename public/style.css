@@ -430,18 +430,23 @@ body {
 }
 
 .entry-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
+  position: relative;
   max-width: 550px;
 }
 
 .entry-mood-icon {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  margin-top: 2px;
+  position: absolute;
+  left: -21px;
+  top: 2px;
+  width: 16px;
+  height: 16px;
   color: var(--muted);
+}
+
+.entry-mood-icon svg {
+  display: block;
+  width: 16px;
+  height: 16px;
 }
 
 .entry-bubble {
@@ -512,7 +517,7 @@ body {
 }
 
 .entry-mood-only {
-  align-self: center;
+  padding-top: 1px;
   font: 400 15px var(--font-body);
   color: var(--muted);
 }
@@ -555,18 +560,18 @@ body {
 
   .entry-row {
     max-width: none;
-    gap: 10px;
   }
 
   .entry-mood-icon {
-    width: 22px;
-    height: 22px;
+    left: -13px;
+    width: 12px;
+    height: 12px;
     opacity: .5;
   }
 
   .entry-mood-icon svg {
-    width: 22px;
-    height: 22px;
+    width: 12px;
+    height: 12px;
   }
 
   .entry-bubble {
