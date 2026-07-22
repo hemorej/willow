@@ -464,9 +464,28 @@ if (process.env.NODE_ENV !== 'production') {
 // Daily reminder scheduler
 // ---------------------------------------------------------------------------
 
+// Reused from GRATITUDE_PROMPTS in public/gratitude.js (prompt text only) so
+// the daily nudge reads like the rest of the app instead of generic copy.
+// Kept in sync with public/gratitude.js, same as GRATITUDE_TAGS above.
+const REMINDER_MESSAGES = [
+  'What did you savour today?',
+  'What made you proud today?',
+  'What are you looking forward to?',
+  'What made you smile today?',
+  'What made today a good day?',
+  "What's something kind someone did for you today?",
+  'Who are you thankful for today?',
+  'What small comfort did you enjoy?',
+  'What went better than expected?',
+  'What in your day felt like a gift?',
+  'What are you glad you have right now?',
+  'What beauty did you notice today?'
+];
+
 async function sendDailyReminders() {
   const { rows } = await pool.query('SELECT id, endpoint, p256dh, auth FROM push_subscriptions');
-  const payload = JSON.stringify({ title: 'Willow', body: 'Take a moment to check in with yourself today.' });
+  const body = REMINDER_MESSAGES[Math.floor(Math.random() * REMINDER_MESSAGES.length)];
+  const payload = JSON.stringify({ title: 'Willow', body });
 
   for (const row of rows) {
     const subscription = { endpoint: row.endpoint, keys: { p256dh: row.p256dh, auth: row.auth } };

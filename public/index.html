@@ -145,6 +145,13 @@
       draft.placeholder = gratitudeOn ? FOCUSED_PLACEHOLDER_GRATITUDE : FOCUSED_PLACEHOLDER;
     });
 
+    // A push notification click can deep-link here with ?gratitude=1 (see
+    // public/sw.js) to land directly in the gratitude flow.
+    if (new URLSearchParams(location.search).get('gratitude') === '1') {
+      gratToggle.click();
+      history.replaceState(null, '', location.pathname);
+    }
+
     // Mood row
     let selectedMood = null;
     const moodRow = document.getElementById('mood-row');
