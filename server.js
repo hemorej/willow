@@ -445,18 +445,20 @@ app.post('/api/push/unsubscribe', validateCsrf, async (req, res) => {
 });
 
 // Sends today's reminder immediately, bypassing the schedule — a way to test
-// end-to-end delivery without waiting for REMINDER_TIME. Same auth+CSRF
-// gate as every other mutating route; not a public/unauthenticated endpoint.
-app.post('/api/push/test', validateCsrf, async (_req, res) => {
-  if (!PUSH_ENABLED) return res.status(503).json({ error: 'Push is not configured' });
-  try {
-    await sendDailyReminders();
-    res.json({ ok: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to send test notification' });
-  }
-});
+// end-to-end delivery without waiting for REMINDER_TIME. Dev/staging only:
+// not reachable at all in production, regardless of session/CSRF.
+if (process.env.NODE_ENV !== 'production') {
+  app.post('/api/push/test', validateCsrf, async (_req, res) => {
+    if (!PUSH_ENABLED) return res.status(503).json({ error: 'Push is not configured' });
+    try {
+      await sendDailyReminders();
+      res.json({ ok: true });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Failed to send test notification' });
+    }
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Daily reminder scheduler
