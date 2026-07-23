@@ -9,7 +9,7 @@ self.addEventListener('push', (event) => {
     // Ignore malformed payloads and fall back to defaults below.
   }
 
-  const title = data.title || 'Willow';
+  const title = data.title || 'willow';
   const options = {
     body: data.body || 'Time for your daily check-in.',
     icon: '/icon-192.png',

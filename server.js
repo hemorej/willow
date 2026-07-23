@@ -485,7 +485,7 @@ const REMINDER_MESSAGES = [
 async function sendDailyReminders() {
   const { rows } = await pool.query('SELECT id, endpoint, p256dh, auth FROM push_subscriptions');
   const body = REMINDER_MESSAGES[Math.floor(Math.random() * REMINDER_MESSAGES.length)];
-  const payload = JSON.stringify({ title: 'Willow', body });
+  const payload = JSON.stringify({ title: 'willow', body });
 
   for (const row of rows) {
     const subscription = { endpoint: row.endpoint, keys: { p256dh: row.p256dh, auth: row.auth } };
