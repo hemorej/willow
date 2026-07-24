@@ -59,6 +59,9 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | `SESSION_SECRET` | Yes (prod) | Cookie signing secret. Random ephemeral value used if unset (sessions lost on restart). |
 | `NODE_ENV` | No | Set to `production` to enable secure (HTTPS-only) session cookies |
 | `PORT` | No | HTTP port (default: 3000) |
+| `JOURNAL_ENC_KEY` | No | 32-byte AES-256-GCM key, hex-encoded (64 hex chars). If unset, journal entry text is stored in plaintext. Generate with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. |
+| `JOURNAL_ENC_KEY_VERSION` | No | Integer version tag for `JOURNAL_ENC_KEY` (default `1`). Bump when rotating to a new key. |
+| `JOURNAL_ENC_KEY_PREV` / `JOURNAL_ENC_KEY_PREV_VERSION` | No | Previous key/version, kept only during a rotation so old rows stay readable until `pnpm run rotate-key` has rewrapped them. |
 
 ## Development
 

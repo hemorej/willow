@@ -19,6 +19,7 @@ const path = require('path');
 const crypto = require('crypto');
 const pool = require('../db');
 const { initDb } = require('../migrate');
+const journalCrypto = require('../lib/journal-crypto');
 
 const DATA_DIR = path.join(__dirname, '..', 'data_export');
 
@@ -121,7 +122,7 @@ async function importGratitudeCsv(file, nextOrder) {
         `INSERT INTO journal_entries (id, entry_date, entry_order, mood, body, gratitude, gratitude_tag, data)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          ON CONFLICT (id) DO NOTHING`,
-        [id, date, order, null, text || null, true, tag, record]
+        [id, date, order, null, journalCrypto.encryptText(text || null), true, tag, journalCrypto.encryptJSON(record)]
       );
       rowCount ? imported++ : skipped++;
     } catch (err) {
@@ -177,7 +178,7 @@ async function importJournalTxt(nextOrder) {
         `INSERT INTO journal_entries (id, entry_date, entry_order, mood, body, gratitude, gratitude_tag, data)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          ON CONFLICT (id) DO NOTHING`,
-        [id, entry.date, order, null, entry.text, false, null, record]
+        [id, entry.date, order, null, journalCrypto.encryptText(entry.text), false, null, journalCrypto.encryptJSON(record)]
       );
       rowCount ? imported++ : skipped++;
     } catch (err) {
