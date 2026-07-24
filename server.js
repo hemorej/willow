@@ -367,7 +367,7 @@ app.post('/api/journal/entries', validateCsrf, async (req, res) => {
     if (followupId !== null) {
       await pool.query(
         'UPDATE journal_followups SET entry_id = $1, answer = $2 WHERE id = $3 AND entry_id IS NULL',
-        [id, followupAnswer, followupId]
+        [id, journalCrypto.encryptText(followupAnswer), followupId]
       );
     }
 
