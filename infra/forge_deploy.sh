@@ -4,7 +4,7 @@ cd $FORGE_RELEASE_DIRECTORY
 
 $PNPM_PATH install --frozen-lockfile
 
-ln -s /mnt/volume-tor1-01/willowfonts public/fonts
+ln -s /mnt/$VOLUME_NAME/willowfonts public/fonts
 
 $PNPM_PATH build
 
