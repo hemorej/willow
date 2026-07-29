@@ -396,17 +396,24 @@ const FOLLOWUP_QUESTIONS = {
     'How can you show yourself kindness in this moment?',
     'What would you say to a friend who felt this way?',
     'What do you need to hear right now?',
-    "Where can you offer yourself a little softness today?",
+    'Where can you offer yourself a little softness today?',
     "What's one way you could be gentler with yourself?",
-    "What's something you're being hard on yourself about that you could set down?"
+    "What's one thing you can let go of righ now?",
+    'What is preventing you from being compassionate to yourself?',
+    'What helps you feel safe?',
+    'What expectation of yourself can you let go of?',
+    'Recognize, normalize, soothe'
   ],
   act_values: [
-    'What matters most to you in this moment?',
-    'What small step today moved you toward the person you want to be?',
+    'Are you avoiding something hard or uncomfortable?',
+    "The feelings are difficult, can you let them sit and just observe?",
+    'Which version of you would you rather be right now?',
     'Which of your values felt most alive today?',
-    'What would acting on your values look like right now, even if it feels uncomfortable?',
+    'What would acting on your values look like right now, even if it feels hard?',
     'What can you make room for today, even alongside difficult feelings?',
-    "What's something you did today that felt aligned with who you want to be?"
+    "What's something you did today that felt aligned with who you want to be?",
+    "The passengers are your difficult thoughts, feelings, memories, urges, and self-doubts. Can you keep driving toward the kind of life that matters to you?",
+    "Accept, defuse, move towards"
   ]
 };
 
