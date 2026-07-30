@@ -104,7 +104,7 @@ async function createEntry(body) {
 async function listEntries() {
   const { rows } = await pool.query(
     `SELECT je.id, je.entry_date, je.entry_order, je.mood, je.body, je.gratitude, je.gratitude_tag,
-            jf.question AS followup_question, jf.answer AS followup_answer
+            jf.theme AS followup_theme, jf.question AS followup_question, jf.answer AS followup_answer
      FROM journal_entries je
      LEFT JOIN journal_followups jf ON jf.entry_id = je.id AND jf.answer IS NOT NULL
      ORDER BY je.entry_date DESC, je.entry_order DESC`
@@ -117,6 +117,7 @@ async function listEntries() {
     mood: r.mood,
     gratitude: r.gratitude,
     gratitudeTag: r.gratitude_tag,
+    followupTheme: r.followup_theme || null,
     followupQuestion: r.followup_question || null,
     followupAnswer: journalCrypto.decryptText(r.followup_answer)
   }));
