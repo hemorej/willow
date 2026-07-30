@@ -1,6 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { getLogger } = require('../lib/logger');
+
+const logger = getLogger('config');
 
 const PORT = process.env.PORT || 3000;
 
@@ -8,7 +11,7 @@ const DIST_DIR = path.join(__dirname, '..', 'dist');
 const STATIC_DIR = fs.existsSync(DIST_DIR) ? DIST_DIR : path.join(__dirname, '..', 'public');
 
 if (!process.env.SESSION_SECRET) {
-  console.warn('SESSION_SECRET not set — sessions will not survive restarts');
+  logger.warn('config.session_secret_missing');
 }
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 
@@ -21,7 +24,7 @@ const PUSH_ENABLED = Boolean(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY && VAPID_SUBJ
 // Set the standard TZ env var if the server isn't already in your timezone.
 const REMINDER_TIME = process.env.REMINDER_TIME || '20:00';
 const REMINDER_MATCH = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(REMINDER_TIME);
-if (!REMINDER_MATCH) console.warn(`REMINDER_TIME "${REMINDER_TIME}" is invalid — expected "HH:MM"`);
+if (!REMINDER_MATCH) logger.warn('config.reminder_time_invalid', { reminderTime: REMINDER_TIME });
 
 module.exports = {
   PORT,
