@@ -191,6 +191,10 @@ body {
     margin-right: 46px;
   }
 
+  .push-toggle {
+    display: none;
+  }
+
   .nav-pill {
     padding: 7px 10px;
   }
