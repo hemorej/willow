@@ -103,7 +103,11 @@ async function createEntry(body) {
 
 async function listEntries() {
   const { rows } = await pool.query(
-    'SELECT id, entry_date, entry_order, mood, body, gratitude, gratitude_tag FROM journal_entries ORDER BY entry_date DESC, entry_order DESC'
+    `SELECT je.id, je.entry_date, je.entry_order, je.mood, je.body, je.gratitude, je.gratitude_tag,
+            jf.question AS followup_question, jf.answer AS followup_answer
+     FROM journal_entries je
+     LEFT JOIN journal_followups jf ON jf.entry_id = je.id AND jf.answer IS NOT NULL
+     ORDER BY je.entry_date DESC, je.entry_order DESC`
   );
   return rows.map((r) => ({
     id: r.id,
@@ -112,7 +116,9 @@ async function listEntries() {
     text: journalCrypto.decryptText(r.body),
     mood: r.mood,
     gratitude: r.gratitude,
-    gratitudeTag: r.gratitude_tag
+    gratitudeTag: r.gratitude_tag,
+    followupQuestion: r.followup_question || null,
+    followupAnswer: journalCrypto.decryptText(r.followup_answer)
   }));
 }
 

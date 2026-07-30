@@ -513,7 +513,7 @@ body {
 .day-number {
   order: 3;
   font: 500 15px var(--font-head);
-  color: var(--text);
+  color: var(--muted);
   margin: 0;
 }
 
@@ -543,19 +543,71 @@ body {
   max-width: 550px;
 }
 
-.entry-mood-icon {
+.entry-followup-flag {
   position: absolute;
   left: -21px;
-  top: 2px;
-  width: 16px;
-  height: 16px;
+  top: 3px;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+  cursor: default;
+}
+
+.entry-followup-flag svg {
+  display: block;
+  width: 8px;
+  height: 8px;
+}
+
+.followup-tooltip {
+  display: none;
+  position: absolute;
+  top: -6px;
+  left: 22px;
+  width: 220px;
+  background: var(--text);
+  color: var(--card);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font: 400 13px/1.45 var(--font-body);
+  white-space: pre-wrap;
+  word-break: break-word;
+  z-index: 10;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .18);
+}
+
+.followup-tooltip .followup-tooltip-question {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.entry-followup-flag:hover .followup-tooltip {
+  display: block;
+}
+
+.entry-text-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.entry-mood-inline {
+  display: inline-flex;
+  flex-shrink: 0;
   color: var(--muted);
 }
 
-.entry-mood-icon svg {
+.entry-mood-inline svg {
   display: block;
-  width: 16px;
-  height: 16px;
+  width: 1em;
+  height: 1em;
 }
 
 .entry-bubble {
@@ -578,6 +630,8 @@ body {
   margin: -2px -6px;
   padding: 2px 6px;
   transition: background .15s ease;
+  flex: 1;
+  min-width: 0;
 }
 
 .entry-text:hover,
@@ -589,6 +643,8 @@ body {
 .entry-edit-textarea {
   display: block;
   width: 100%;
+  flex: 1;
+  min-width: 0;
   min-height: 0;
   border: none;
   border-radius: 0;
@@ -625,7 +681,7 @@ body {
   flex-shrink: 0;
 }
 
-.entry-mood-only {
+.entry-text-row.mood-only-row {
   padding-top: 1px;
   font: 400 15px var(--font-body);
   color: var(--muted);
@@ -671,16 +727,15 @@ body {
     max-width: none;
   }
 
-  .entry-mood-icon {
+  .entry-followup-flag {
     left: -13px;
-    width: 12px;
-    height: 12px;
-    opacity: .5;
+    width: 11px;
+    height: 11px;
   }
 
-  .entry-mood-icon svg {
-    width: 12px;
-    height: 12px;
+  .entry-followup-flag svg {
+    width: 6px;
+    height: 6px;
   }
 
   .entry-bubble {
