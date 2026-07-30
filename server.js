@@ -9,9 +9,12 @@ const { initDb } = require('./migrate');
 const { PORT, STATIC_DIR, SESSION_SECRET } = require('./config/env');
 const { globalLimiter } = require('./middleware/rateLimit');
 const { requireAuth } = require('./middleware/auth');
+const { requestLog } = require('./middleware/requestLog');
 const routes = require('./routes');
 const { scheduleDailyReminder } = require('./services/pushService');
+const { getLogger } = require('./lib/logger');
 
+const logger = getLogger('server');
 const app = express();
 
 app.disable('x-powered-by');
@@ -21,6 +24,7 @@ app.set('trust proxy', 1);
 
 app.use(express.json({ limit: '256kb' }));
 app.use(express.urlencoded({ extended: false }));
+app.use(requestLog);
 
 // lgtm[js/missing-token-validation] -- CSRF is handled by validateCsrf on all mutation routes; sameSite:strict provides browser-level protection
 app.use(session({
@@ -47,11 +51,11 @@ async function start() {
   await initDb();
   scheduleDailyReminder();
   app.listen(PORT, () => {
-    console.log(`willow app running at http://localhost:${PORT}`);
+    logger.info('server.start', { port: PORT });
   });
 }
 
 start().catch((err) => {
-  console.error('Failed to start:', err);
+  logger.error('server.start_failed', { err: err.message });
   process.exit(1);
 });

@@ -1,21 +1,25 @@
 const cbtService = require('../services/cbtService');
+const { getLogger } = require('../lib/logger');
+
+const logger = getLogger('cbt');
 
 async function submit(req, res) {
   try {
     const { filename } = await cbtService.submit(req.body || {});
+    logger.info('cbt.entry_saved', { requestId: req.id, filename });
     res.json({ ok: true, filename });
   } catch (err) {
-    console.error(err);
+    logger.error('cbt.entry_save_failed', { requestId: req.id, err: err.message });
     res.status(500).json({ ok: false, error: 'Failed to save record' });
   }
 }
 
-async function listEntries(_req, res) {
+async function listEntries(req, res) {
   try {
     const entries = await cbtService.listEntries();
     res.json({ ok: true, entries });
   } catch (err) {
-    console.error(err);
+    logger.error('cbt.list_failed', { requestId: req.id, err: err.message });
     res.status(500).json({ ok: false, error: 'Failed to read entries' });
   }
 }
@@ -27,7 +31,7 @@ async function getEntry(req, res) {
     if (result.notFound) return res.status(404).json({ ok: false, error: 'Not found' });
     res.json({ ok: true, filename: req.params.filename, record: result.record });
   } catch (err) {
-    console.error(err);
+    logger.error('cbt.get_failed', { requestId: req.id, err: err.message });
     res.status(500).json({ ok: false, error: 'Failed to read entry' });
   }
 }

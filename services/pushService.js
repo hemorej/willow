@@ -8,11 +8,14 @@ const {
   REMINDER_TIME,
   REMINDER_MATCH
 } = require('../config/env');
+const { getLogger } = require('../lib/logger');
+
+const logger = getLogger('push');
 
 if (PUSH_ENABLED) {
   webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 } else {
-  console.warn('VAPID keys not set — push reminders are disabled');
+  logger.warn('push.disabled', { reason: 'vapid_keys_missing' });
 }
 
 // Push subscription endpoints are URLs the server will POST to unattended,
@@ -81,13 +84,14 @@ async function sendDailyReminders() {
     const subscription = { endpoint: row.endpoint, keys: { p256dh: row.p256dh, auth: row.auth } };
     try {
       const result = await webpush.sendNotification(subscription, payload);
-      console.log(`Push sent to subscription ${row.id}: ${result.statusCode} ${JSON.stringify(row.endpoint)}`);
+      logger.info('push.sent', { subscriptionId: row.id, statusCode: result.statusCode });
     } catch (err) {
       if (err.statusCode === 404 || err.statusCode === 410) {
         // Subscription expired or was revoked on the client — stop targeting it.
         await pool.query('DELETE FROM push_subscriptions WHERE id = $1', [row.id]);
+        logger.info('push.subscription_removed', { subscriptionId: row.id, reason: 'stale' });
       } else {
-        console.error('Push send failed:', err.statusCode || err.message);
+        logger.error('push.send_failed', { subscriptionId: row.id, statusCode: err.statusCode, err: err.message });
       }
     }
   }
@@ -112,14 +116,14 @@ function scheduleDailyReminder() {
       try {
         await sendDailyReminders();
       } catch (err) {
-        console.error('Daily reminder run failed:', err);
+        logger.error('push.reminder_run_failed', { err: err.message });
       }
       scheduleNext();
     }, msUntilNext(hour, minute));
   }
 
   scheduleNext();
-  console.log(`Daily push reminder scheduled for ${REMINDER_TIME} (server local time)`);
+  logger.info('push.reminder_scheduled', { reminderTime: REMINDER_TIME });
 }
 
 module.exports = {

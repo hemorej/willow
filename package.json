@@ -23,6 +23,7 @@
         "express-rate-limit": "^8.6.0",
         "express-session": "^1.19.0",
         "pg": "^8.22.0",
+        "tslog": "^5.1.0",
         "web-push": "^3.6.7"
     },
     "devDependencies": {
