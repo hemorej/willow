@@ -61,6 +61,11 @@
   <script src="/moods.js"></script>
   <script src="/gratitude.js"></script>
   <script>
+    const FOLLOWUP_THEME_LABELS = {
+      self_compassion: 'self-compassion follow up',
+      act_values: 'act values follow up',
+    };
+
     let _csrfToken = null;
     async function getCsrfToken() {
       if (!_csrfToken) {
@@ -220,42 +225,80 @@
 
           const hasMood = e.mood !== null && e.mood !== undefined;
           const hasText = e.text && String(e.text).trim();
-
-          if (hasMood) {
-            const face = document.createElement('span');
-            face.className = 'entry-mood-icon';
-            face.innerHTML = moodFaceSvg(e.mood, 28);
-            entryRow.appendChild(face);
-          }
+          const hasFollowup = e.followupAnswer && String(e.followupAnswer).trim();
 
           if (hasText) {
-            const grat = !!e.gratitude;
             const bubble = document.createElement('div');
             bubble.className = 'entry-bubble';
 
-            if (grat) {
-              const caption = document.createElement('div');
-              caption.className = 'gratitude-caption';
-              caption.innerHTML = sproutSvg(14);
-              const tag = document.createElement('span');
-              tag.textContent = e.gratitudeTag || 'Grateful for';
-              caption.appendChild(tag);
-              bubble.appendChild(caption);
-            }
-
+            const textRow = document.createElement('div');
+            textRow.className = 'entry-text-row';
             const textEl = document.createElement('div');
             textEl.className = 'entry-text';
             textEl.textContent = e.text;
             textEl.tabIndex = 0;
             textEl.addEventListener('click', () => startEdit(bubble, textEl, e));
-            bubble.appendChild(textEl);
-
+            textRow.appendChild(textEl);
+            bubble.appendChild(textRow);
             entryRow.appendChild(bubble);
+
+            // ---- footnote row: gratitude → mood → follow-up ----
+            const meta = document.createElement('div');
+            meta.className = 'entry-meta';
+
+            if (e.gratitude) {
+              const item = document.createElement('span');
+              item.className = 'entry-meta-item gratitude';
+              item.innerHTML = sproutSvg(13);
+              const label = document.createElement('span');
+              label.textContent = e.gratitudeTag || 'Grateful for';
+              item.appendChild(label);
+              meta.appendChild(item);
+            }
+
+            if (hasMood) {
+              const item = document.createElement('span');
+              item.className = 'entry-meta-item mood';
+              item.innerHTML = moodFaceSvg(e.mood, 13);
+              const label = document.createElement('span');
+              label.textContent = MOODS[e.mood].name;
+              item.appendChild(label);
+              meta.appendChild(item);
+            }
+
+            if (hasFollowup) {
+              const item = document.createElement('span');
+              item.className = 'entry-meta-item followup';
+              item.tabIndex = 0;
+              item.innerHTML = followupSvg(13);
+              const label = document.createElement('span');
+              label.textContent = FOLLOWUP_THEME_LABELS[e.followupTheme] || 'follow up';
+              item.appendChild(label);
+
+              const tip = document.createElement('div');
+              tip.className = 'followup-tooltip';
+              if (e.followupQuestion) {
+                const q = document.createElement('span');
+                q.className = 'followup-tooltip-question';
+                q.textContent = e.followupQuestion;
+                tip.appendChild(q);
+              }
+              const a = document.createElement('span');
+              a.textContent = e.followupAnswer;
+              tip.appendChild(a);
+              item.appendChild(tip);
+              meta.appendChild(item);
+            }
+
+            if (meta.childNodes.length) entryRow.appendChild(meta);
           } else if (hasMood) {
-            const line = document.createElement('div');
-            line.className = 'entry-mood-only';
+            const row = document.createElement('div');
+            row.className = 'entry-text-row mood-only-row';
+            row.innerHTML = moodFaceSvg(e.mood, 20);
+            const line = document.createElement('span');
             line.textContent = `Checked in — feeling ${MOODS[e.mood].name}`;
-            entryRow.appendChild(line);
+            row.appendChild(line);
+            entryRow.appendChild(row);
           }
 
           entriesCol.appendChild(entryRow);

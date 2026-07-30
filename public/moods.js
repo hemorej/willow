@@ -10,10 +10,12 @@ const MOODS = [
 function moodFaceSvg(index, size) {
   const m = MOODS[index];
   const s = size || 30;
-  return `<svg width="${s}" height="${s}" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  const strokeWidth = s <= 16 ? 2.6 : 1.6;
+  const eyeRadius = s <= 16 ? 1.8 : 1.5;
+  return `<svg width="${s}" height="${s}" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round">
     <circle cx="20" cy="20" r="18"/>
-    <circle cx="14" cy="17" r="1.5" fill="currentColor" stroke="none"/>
-    <circle cx="26" cy="17" r="1.5" fill="currentColor" stroke="none"/>
+    <circle cx="14" cy="17" r="${eyeRadius}" fill="currentColor" stroke="none"/>
+    <circle cx="26" cy="17" r="${eyeRadius}" fill="currentColor" stroke="none"/>
     <path d="${m.mouth}"/>
   </svg>`;
 }
