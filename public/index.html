@@ -57,7 +57,7 @@
         <textarea
           id="draft"
           class="journal-textarea"
-          placeholder="Start writing. Whatever comes."
+          placeholder=""
         ></textarea>
 
         <div class="journal-footer">
@@ -138,12 +138,12 @@
 
     const pool = PROMPTS[partOfDay(now.getHours())];
     const seed = Math.floor(Math.random() * 997);
-    const regularGreeting = pool[seed % pool.length];
+    const regularPlaceholder = pool[seed % pool.length];
     const greetingEl = document.getElementById('greeting');
-    greetingEl.textContent = regularGreeting;
+    const REGULAR_HEADER = 'Checking in';
+    greetingEl.textContent = REGULAR_HEADER;
 
-    const FOCUSED_PLACEHOLDER = 'Start writing. Whatever comes.';
-    const FOCUSED_PLACEHOLDER_GRATITUDE = 'Name it, big or small…';
+    const FOCUSED_PLACEHOLDER_GRATITUDE = 'Even a small thing counts';
 
     // Gratitude toggle
     let gratitudeOn = false;
@@ -153,8 +153,8 @@
       gratitudeOn = !gratitudeOn;
       if (gratitudeOn) gratIdx = Math.floor(Math.random() * GRATITUDE_PROMPTS.length);
       gratToggle.classList.toggle('on', gratitudeOn);
-      greetingEl.textContent = gratitudeOn ? GRATITUDE_PROMPTS[gratIdx].prompt : regularGreeting;
-      draft.placeholder = gratitudeOn ? FOCUSED_PLACEHOLDER_GRATITUDE : FOCUSED_PLACEHOLDER;
+      greetingEl.textContent = gratitudeOn ? GRATITUDE_PROMPTS[gratIdx].prompt : REGULAR_HEADER;
+      draft.placeholder = gratitudeOn ? FOCUSED_PLACEHOLDER_GRATITUDE : regularPlaceholder;
     });
 
     // A push notification click can deep-link here with ?gratitude=1 (see
@@ -186,6 +186,7 @@
 
     // Draft textarea (uncontrolled, avoids re-render on every keystroke)
     const draft = document.getElementById('draft');
+    draft.placeholder = regularPlaceholder;
     const saveBtn = document.getElementById('save-btn');
     draft.addEventListener('input', updateSaveState);
 
