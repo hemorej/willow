@@ -36,7 +36,6 @@ const FOLLOWUP_CHANCE = 0.25;
 
 const FOLLOWUP_QUESTIONS = {
   self_compassion: [
-    'How can you show yourself kindness in this moment?',
     'What would you say to a friend who felt this way?',
     'What do you need to hear right now?',
     'Where can you offer yourself a little softness today?',
@@ -44,19 +43,17 @@ const FOLLOWUP_QUESTIONS = {
     "What's one thing you can let go of righ now?",
     'What is preventing you from being compassionate to yourself?',
     'What helps you feel safe?',
-    'What expectation of yourself can you let go of?',
-    'Recognize, normalize, soothe'
+    'What expectation of yourself can you let go of?'
   ],
   act_values: [
     'Are you avoiding something hard or uncomfortable?',
     "The feelings are difficult, can you let them sit and just observe?",
     'Which version of you would you rather be right now?',
-    'Which of your values felt most alive today?',
     'What would acting on your values look like right now, even if it feels hard?',
     'What can you make room for today, even alongside difficult feelings?',
-    "What's something you did today that felt aligned with who you want to be?",
-    "The passengers are your difficult thoughts, feelings, memories, urges, and self-doubts. Can you keep driving toward the kind of life that matters to you?",
-    "Accept, defuse, move towards"
+    "Is this a fact or a thought your mind is offering you?",
+    "What do you notice right now if you pause and take a breath?",
+    "Can you hold this feeling a little more loosely, without pushing it away?"
   ]
 };
 
