@@ -36,24 +36,28 @@ const FOLLOWUP_CHANCE = 0.25;
 
 const FOLLOWUP_QUESTIONS = {
   self_compassion: [
-    'What would you say to a friend who felt this way?',
     'What do you need to hear right now?',
     'Where can you offer yourself a little softness today?',
-    "What's one way you could be gentler with yourself?",
-    "What's one thing you can let go of righ now?",
     'What is preventing you from being compassionate to yourself?',
     'What helps you feel safe?',
     'What expectation of yourself can you let go of?'
+    'If 🐶 could see you right now, what would he want you to remember?',
+    'What story are you telling yourself about this moment?',
+    'If you could observe your current pain from across the room, what would you notice about myself?',
+    'When you imagine the most accomplished "together" person you know, what struggles do you think they might have?',
+    'What is something you judge harshly in yourself that you would not judge in someone else?',
   ],
   act_values: [
-    'Are you avoiding something hard or uncomfortable?',
-    "The feelings are difficult, can you let them sit and just observe?",
+    'What discomfort or experience are you avoiding?',
+    'The feelings are difficult, can you let them sit and just observe?',
     'Which version of you would you rather be right now?',
-    'What would acting on your values look like right now, even if it feels hard?',
-    'What can you make room for today, even alongside difficult feelings?',
-    "Is this a fact or a thought your mind is offering you?",
-    "What do you notice right now if you pause and take a breath?",
-    "Can you hold this feeling a little more loosely, without pushing it away?"
+    'What would acting on your values look like right now, even if it were hard?',
+    'What can you make room for today, alongside difficult feelings?',
+    'Is this a fact or a thought your mind is offering you?',
+    'What do you notice right now if you pause and take a breath?',
+    'Can you hold this feeling a little more loosely, without pushing it away?',
+    'Can you thank your mind for that thought, and let it pass through?',
+    'Is there a value that felt most alive for you today?'
   ]
 };
 
