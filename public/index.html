@@ -70,12 +70,13 @@
 
   <div class="followup-overlay" id="followup-overlay" hidden>
     <div class="followup-modal">
-      <p class="followup-eyebrow">A gentle followup</p>
+      <p class="followup-eyebrow" id="followup-eyebrow">A gentle followup</p>
       <p class="followup-question" id="followup-question"></p>
       <textarea class="followup-textarea" id="followup-textarea" placeholder="Write as much or as little as you like"></textarea>
       <div class="followup-actions">
         <button type="button" class="btn secondary" id="followup-skip">Skip</button>
         <button type="button" class="btn" id="followup-continue">Continue</button>
+        <button type="button" class="btn" id="followup-ok" hidden>OK</button>
       </div>
     </div>
   </div>
@@ -194,31 +195,44 @@
       saveBtn.disabled = !(draft.value.trim() || selectedMood !== null);
     }
 
-    // Reflective followup modal (self-compassion / ACT values prompts)
+    // Reflective followup modal — either a question (self-compassion / ACT
+    // values, answer captured) or a standalone statement (acknowledgment only,
+    // no answer captured, never shown in the journal-log footnotes).
     const followupOverlay = document.getElementById('followup-overlay');
+    const followupEyebrow = document.getElementById('followup-eyebrow');
     const followupQuestionEl = document.getElementById('followup-question');
     const followupTextarea = document.getElementById('followup-textarea');
     const followupSkip = document.getElementById('followup-skip');
     const followupContinue = document.getElementById('followup-continue');
+    const followupOk = document.getElementById('followup-ok');
 
-    function askFollowup(question) {
+    function askFollowup(question, kind) {
       return new Promise((resolve) => {
+        const isStatement = kind === 'statement';
+        followupEyebrow.textContent = isStatement ? 'A little reminder' : 'A gentle followup';
         followupQuestionEl.textContent = question;
         followupTextarea.value = '';
+        followupTextarea.hidden = isStatement;
+        followupSkip.hidden = isStatement;
+        followupContinue.hidden = isStatement;
+        followupOk.hidden = !isStatement;
         followupOverlay.hidden = false;
-        followupTextarea.focus();
+        if (!isStatement) followupTextarea.focus();
 
         function done(answer) {
           followupOverlay.hidden = true;
           followupSkip.removeEventListener('click', onSkip);
           followupContinue.removeEventListener('click', onContinue);
+          followupOk.removeEventListener('click', onOk);
           resolve(answer);
         }
         function onSkip() { done(null); }
         function onContinue() { done(followupTextarea.value.trim() || null); }
+        function onOk() { done(null); }
 
         followupSkip.addEventListener('click', onSkip);
         followupContinue.addEventListener('click', onContinue);
+        followupOk.addEventListener('click', onOk);
       });
     }
 
@@ -244,9 +258,11 @@
             body: JSON.stringify({ date }),
           });
           const check = await checkRes.json();
-          if (check.show) {
+          if (check.show && check.kind === 'statement') {
+            await askFollowup(check.question, 'statement');
+          } else if (check.show) {
             followupId = check.id;
-            followupAnswer = await askFollowup(check.question);
+            followupAnswer = await askFollowup(check.question, 'question');
           }
         }
 

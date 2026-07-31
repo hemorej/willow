@@ -40,7 +40,7 @@ const FOLLOWUP_QUESTIONS = {
     'Where can you offer yourself a little softness today?',
     'What is preventing you from being compassionate to yourself?',
     'What helps you feel safe?',
-    'What expectation of yourself can you let go of?'
+    'What expectation of yourself can you let go of?',
     'If 🐶 could see you right now, what would he want you to remember?',
     'What story are you telling yourself about this moment?',
     'If you could observe your current pain from across the room, what would you notice about myself?',
@@ -61,7 +61,20 @@ const FOLLOWUP_QUESTIONS = {
   ]
 };
 
-const FOLLOWUP_THEMES = Object.keys(FOLLOWUP_QUESTIONS);
+// Standalone reflective statements — shown the same way as the question
+// followups (same eligibility/frequency logic), but as a plain acknowledgment
+// with no answer captured, so they never appear in the journal-log footnotes.
+const FOLLOWUP_STATEMENTS = [
+  "The observing self: I'm having the thought ... rather than being that thought",
+  'Thoughts are just mental events, not facts',
+  'You can observe feelings without being consumed by them',
+  'You are driving a van with loud passengers: thoughts, feelings, memories, urges, and self-doubts. Keep driving toward the life that matters to you',
+  'Notice, name, normalize then soothe: offer yourself kindness',
+  'You are here. You are okay. You do not have to escape this.',
+  'Notice, accept, defuse, then move towards a value'
+];
+
+const FOLLOWUP_THEMES = [...Object.keys(FOLLOWUP_QUESTIONS), 'statement'];
 
 function isValidDate(date) {
   return typeof date === 'string' && JOURNAL_DATE.test(date);
@@ -156,15 +169,16 @@ async function checkFollowup(date) {
   if (!show) return { show: false };
 
   const theme = FOLLOWUP_THEMES[Math.floor(Math.random() * FOLLOWUP_THEMES.length)];
-  const questions = FOLLOWUP_QUESTIONS[theme];
-  const question = questions[Math.floor(Math.random() * questions.length)];
+  const kind = theme === 'statement' ? 'statement' : 'question';
+  const pool_ = kind === 'statement' ? FOLLOWUP_STATEMENTS : FOLLOWUP_QUESTIONS[theme];
+  const question = pool_[Math.floor(Math.random() * pool_.length)];
 
   const { rows: inserted } = await pool.query(
     'INSERT INTO journal_followups (shown_date, theme, question) VALUES ($1, $2, $3) RETURNING id',
     [date, theme, question]
   );
 
-  return { show: true, id: inserted[0].id, theme, question };
+  return { show: true, id: inserted[0].id, theme, kind, question };
 }
 
 module.exports = {
