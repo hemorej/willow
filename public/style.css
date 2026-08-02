@@ -806,6 +806,10 @@ h2 { margin-top: 0; }
   font-size: 14px;
 }
 
+button[hidden], .btn[hidden] {
+  display: none;
+}
+
 button, .btn {
   display: inline-block;
   background: var(--accent);
