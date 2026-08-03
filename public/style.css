@@ -429,10 +429,18 @@ body {
   border-color: var(--accent);
 }
 
+.followup-textarea[hidden] {
+  display: none;
+}
+
 .followup-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.followup-actions:has(#followup-ok:not([hidden])) {
+  justify-content: center;
 }
 
 /* ---------------------------------------------------------------------- */
