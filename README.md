@@ -1,5 +1,7 @@
 # Willow
 
+[![Laravel Forge Site Deployment Status](https://img.shields.io/endpoint?url=https%3A%2F%2Fforge.laravel.com%2Fsite-badges%2F1901153d-03ce-47d0-8f6d-b34f3990a2d1&style=plastic)](https://forge.laravel.com/jerome-zpm/resilient-bird/3264110)
+
 A small, private journaling app with two secondary self-care tools:
 
 - **Journal** — a daily mood check-in and free-writing entry, with a reverse-chronological log of past entries.
