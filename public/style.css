@@ -541,24 +541,84 @@ body {
   margin: 0;
 }
 
-.day-entries {
+.day-prose {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  padding: 22px 0 30px;
   min-width: 0;
+  margin: 0;
+  padding: 22px 0 34px;
+  max-width: 62ch;
+  font: 400 20px/1.85 var(--font-head);
+  color: var(--text);
+  letter-spacing: -.005em;
+  text-wrap: pretty;
+  text-indent: 1.4em;
 }
 
-.entry-row {
+.entry-run {
   position: relative;
-  max-width: 550px;
+  border-radius: 3px;
+  padding: .05em;
+  transition: background .15s ease;
+}
+
+.entry-run:hover,
+.entry-run.editing {
+  background: var(--accent-soft);
+}
+
+.entry-icon {
+  display: inline-block;
+  vertical-align: -.1em;
+}
+
+.entry-icon svg {
+  display: block;
+}
+
+.entry-icon-leaf {
+  width: .8em;
+  margin-right: .22em;
+  vertical-align: -.06em;
+  color: var(--accent);
+}
+
+.entry-icon-mood {
+  width: .85em;
+  margin: 0 .1em;
+  vertical-align: -.1em;
+  color: var(--muted);
+}
+
+.entry-icon-followup {
+  width: .75em;
+  margin-left: .2em;
+  color: var(--muted);
+  cursor: default;
+  outline: none;
+  transition: color .15s ease;
+}
+
+.entry-icon-followup:hover,
+.entry-icon-followup:focus-visible {
+  color: var(--accent);
+}
+
+.entry-text-inline {
+  cursor: text;
+}
+
+.entry-sep {
+  color: var(--muted);
+  opacity: .55;
+  font-size: .7em;
+  vertical-align: .12em;
+  margin: 0 .15em;
 }
 
 .followup-tooltip {
   display: none;
   position: absolute;
-  top: 22px;
+  top: 1.6em;
   left: -4px;
   width: 232px;
   background: var(--text);
@@ -567,6 +627,7 @@ body {
   border-radius: 8px;
   font: 400 13px/1.45 var(--font-body);
   font-style: normal;
+  letter-spacing: normal;
   white-space: pre-wrap;
   word-break: break-word;
   z-index: 20;
@@ -580,87 +641,14 @@ body {
   font-style: italic;
 }
 
-.day-entries .entry-meta-item.followup:hover .followup-tooltip,
-.day-entries .entry-meta-item.followup:focus-visible .followup-tooltip {
+.entry-icon-followup:hover .followup-tooltip,
+.entry-icon-followup:focus-visible .followup-tooltip {
   display: block;
-}
-
-.day-entries .entry-meta {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-top: 2px;
-  font: 400 italic 14px var(--font-head);
-  color: #7c8178;
-}
-
-.day-entries .entry-meta-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.day-entries .entry-meta-item svg {
-  display: block;
-  flex-shrink: 0;
-}
-
-.day-entries .entry-meta-item.followup {
-  position: relative;
-  cursor: default;
-  outline: none;
-  transition: color .15s ease;
-}
-
-.day-entries .entry-meta-item.followup:hover,
-.day-entries .entry-meta-item.followup:focus-visible {
-  color: var(--accent);
-}
-
-:root[data-theme="dark"] .day-entries .entry-meta { color: #8b9086; }
-
-.entry-text-row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.entry-bubble {
-  flex: 1;
-  min-width: 0;
-  background: none;
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  box-shadow: none;
-  font: 400 20px/1.7 var(--font-head);
-  color: var(--text);
-  letter-spacing: -.005em;
-  white-space: pre-wrap;
-}
-
-.entry-text {
-  cursor: text;
-  border-radius: 4px;
-  margin: -2px -6px;
-  padding: 2px 6px;
-  transition: background .15s ease;
-  flex: 1;
-  min-width: 0;
-}
-
-.entry-text:hover,
-.entry-text:focus-visible {
-  background: var(--accent-soft);
-  outline: none;
 }
 
 .entry-edit-textarea {
   display: block;
   width: 100%;
-  flex: 1;
-  min-width: 0;
   min-height: 0;
   border: none;
   border-radius: 0;
@@ -668,7 +656,7 @@ body {
   resize: none;
   overflow: hidden;
   background: transparent;
-  font: 400 20px/1.7 var(--font-head);
+  font: 400 20px/1.85 var(--font-head);
   letter-spacing: -.005em;
   color: var(--text);
   padding: 0;
@@ -679,12 +667,6 @@ body {
   outline: none;
   border: none;
   border-color: transparent;
-}
-
-.entry-text-row.mood-only-row {
-  padding-top: 1px;
-  font: 400 15px var(--font-body);
-  color: var(--muted);
 }
 
 .log-empty {
@@ -700,48 +682,25 @@ body {
 
 @media (max-width: 640px) {
   .day-group {
-    gap: 14px;
+    flex-direction: column;
+    gap: 4px;
   }
 
   .day-date-col {
-    width: 60px;
+    width: auto;
   }
 
   .day-date-inner {
-    flex-wrap: wrap;
-    white-space: normal;
-    row-gap: 2px;
+    position: static;
+    padding: 22px 0 0;
   }
 
-  .day-weekday,
-  .day-month,
-  .day-year {
-    font-size: 12px;
-  }
-
-  .day-number {
-    font-size: 13px;
-  }
-
-  .entry-row {
-    max-width: none;
-  }
-
-  .day-entries .entry-meta {
-    font-size: 13px;
-    gap: 12px;
-  }
-
-  .day-entries {
-    gap: 14px;
-  }
-
-  .entry-bubble {
-    font-size: 17px;
+  .day-prose {
+    padding: 6px 0 30px;
   }
 
   .entry-edit-textarea {
-    font-size: 17px;
+    font-size: 18px;
   }
 }
 

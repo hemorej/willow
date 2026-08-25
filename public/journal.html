@@ -81,9 +81,14 @@
       textarea.style.height = textarea.scrollHeight + 'px';
     }
 
-    function startEdit(bubble, textEl, entry) {
-      if (bubble.classList.contains('editing')) return;
-      bubble.classList.add('editing');
+    function proseDisplayText(text) {
+      const raw = String(text).trim();
+      return /[.!?…]$/.test(raw) ? raw : raw + '.';
+    }
+
+    function startEdit(run, textEl, entry) {
+      if (run.classList.contains('editing')) return;
+      run.classList.add('editing');
 
       const textarea = document.createElement('textarea');
       textarea.className = 'entry-edit-textarea';
@@ -98,11 +103,12 @@
       async function finish(save) {
         if (finished) return;
         finished = true;
-        bubble.classList.remove('editing');
+        run.classList.remove('editing');
 
         const newText = textarea.value.trim();
         if (save && newText && newText !== entry.text) {
-          textEl.textContent = newText;
+          entry.text = newText;
+          textEl.textContent = proseDisplayText(newText);
           textarea.replaceWith(textEl);
           try {
             await fetch(`/api/journal/entries/${encodeURIComponent(entry.id)}`, {
@@ -110,13 +116,11 @@
               headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': await getCsrfToken() },
               body: JSON.stringify({ text: newText }),
             });
-            entry.text = newText;
           } catch (err) {
             console.error('update failed', err);
-            textEl.textContent = entry.text;
           }
         } else {
-          textEl.textContent = entry.text;
+          textEl.textContent = proseDisplayText(entry.text);
           textarea.replaceWith(textEl);
         }
       }
@@ -131,6 +135,15 @@
         }
       });
       textarea.addEventListener('blur', () => finish(true));
+    }
+
+    function leafGlyphSvg() {
+      return '<svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12c0-3 2-5 6-5 0 3-2 5-6 5z"/><path d="M12 14c0-3-2-5-6-5 0 3 2 5 6 5z"/></svg>';
+    }
+
+    function moodGlyphSvg(index) {
+      const m = MOODS[index];
+      return `<svg width="100%" height="100%" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="20" cy="20" r="18"/><circle cx="14" cy="17" r="2" fill="currentColor" stroke="none"/><circle cx="26" cy="17" r="2" fill="currentColor" stroke="none"/><path d="${m.mouth}"/></svg>`;
     }
 
     function localDateFromISO(iso) {
@@ -216,96 +229,82 @@
         dateInner.appendChild(year);
         dateCol.appendChild(dateInner);
 
-        const entriesCol = document.createElement('div');
-        entriesCol.className = 'day-entries';
+        const prose = document.createElement('p');
+        prose.className = 'day-prose';
 
-        group.entries.forEach((e) => {
-          const entryRow = document.createElement('div');
-          entryRow.className = 'entry-row';
+        const visible = group.entries.filter((e) => {
+          const hasMood = e.mood !== null && e.mood !== undefined;
+          const hasText = e.text && String(e.text).trim();
+          return hasText || hasMood;
+        });
 
+        visible.forEach((e, i) => {
           const hasMood = e.mood !== null && e.mood !== undefined;
           const hasText = e.text && String(e.text).trim();
           const hasFollowup = e.followupAnswer && String(e.followupAnswer).trim();
 
-          if (hasText) {
-            const bubble = document.createElement('div');
-            bubble.className = 'entry-bubble';
+          const run = document.createElement('span');
+          run.className = 'entry-run';
 
-            const textRow = document.createElement('div');
-            textRow.className = 'entry-text-row';
-            const textEl = document.createElement('div');
-            textEl.className = 'entry-text';
-            textEl.textContent = e.text;
-            textEl.tabIndex = 0;
-            textEl.addEventListener('click', () => startEdit(bubble, textEl, e));
-            textRow.appendChild(textEl);
-            bubble.appendChild(textRow);
-            entryRow.appendChild(bubble);
-
-            // ---- footnote row: gratitude → mood → follow-up ----
-            const meta = document.createElement('div');
-            meta.className = 'entry-meta';
-
-            if (e.gratitude) {
-              const item = document.createElement('span');
-              item.className = 'entry-meta-item gratitude';
-              item.innerHTML = sproutSvg(13);
-              const label = document.createElement('span');
-              label.textContent = e.gratitudeTag || 'Grateful for';
-              item.appendChild(label);
-              meta.appendChild(item);
-            }
-
-            if (hasMood) {
-              const item = document.createElement('span');
-              item.className = 'entry-meta-item mood';
-              item.innerHTML = moodFaceSvg(e.mood, 13);
-              const label = document.createElement('span');
-              label.textContent = MOODS[e.mood].name;
-              item.appendChild(label);
-              meta.appendChild(item);
-            }
-
-            if (hasFollowup) {
-              const item = document.createElement('span');
-              item.className = 'entry-meta-item followup';
-              item.tabIndex = 0;
-              item.innerHTML = followupSvg(13);
-              const label = document.createElement('span');
-              label.textContent = FOLLOWUP_THEME_LABELS[e.followupTheme] || 'follow up';
-              item.appendChild(label);
-
-              const tip = document.createElement('div');
-              tip.className = 'followup-tooltip';
-              if (e.followupQuestion) {
-                const q = document.createElement('span');
-                q.className = 'followup-tooltip-question';
-                q.textContent = e.followupQuestion;
-                tip.appendChild(q);
-              }
-              const a = document.createElement('span');
-              a.textContent = e.followupAnswer;
-              tip.appendChild(a);
-              item.appendChild(tip);
-              meta.appendChild(item);
-            }
-
-            if (meta.childNodes.length) entryRow.appendChild(meta);
-          } else if (hasMood) {
-            const row = document.createElement('div');
-            row.className = 'entry-text-row mood-only-row';
-            row.innerHTML = moodFaceSvg(e.mood, 20);
-            const line = document.createElement('span');
-            line.textContent = `Checked in — feeling ${MOODS[e.mood].name}`;
-            row.appendChild(line);
-            entryRow.appendChild(row);
+          if (e.gratitude && hasText) {
+            const leaf = document.createElement('span');
+            leaf.className = 'entry-icon entry-icon-leaf';
+            leaf.title = e.gratitudeTag || 'Grateful for';
+            leaf.innerHTML = leafGlyphSvg();
+            run.appendChild(leaf);
           }
 
-          entriesCol.appendChild(entryRow);
+          if (hasText) {
+            const textEl = document.createElement('span');
+            textEl.className = 'entry-text-inline';
+            textEl.textContent = proseDisplayText(e.text);
+            textEl.tabIndex = 0;
+            textEl.addEventListener('click', () => startEdit(run, textEl, e));
+            run.appendChild(textEl);
+          }
+
+          if (hasMood) {
+            const face = document.createElement('span');
+            face.className = 'entry-icon entry-icon-mood';
+            face.title = MOODS[e.mood].name;
+            face.innerHTML = moodGlyphSvg(e.mood);
+            run.appendChild(face);
+          }
+
+          if (hasFollowup) {
+            const item = document.createElement('span');
+            item.className = 'entry-icon entry-icon-followup';
+            item.tabIndex = 0;
+            item.title = FOLLOWUP_THEME_LABELS[e.followupTheme] || 'follow up';
+            item.innerHTML = followupSvg('100%');
+
+            const tip = document.createElement('div');
+            tip.className = 'followup-tooltip';
+            if (e.followupQuestion) {
+              const q = document.createElement('span');
+              q.className = 'followup-tooltip-question';
+              q.textContent = e.followupQuestion;
+              tip.appendChild(q);
+            }
+            const a = document.createElement('span');
+            a.textContent = e.followupAnswer;
+            tip.appendChild(a);
+            item.appendChild(tip);
+            run.appendChild(item);
+          }
+
+          prose.appendChild(run);
+
+          if (i < visible.length - 1) {
+            const sep = document.createElement('span');
+            sep.className = 'entry-sep';
+            sep.textContent = ' • ';
+            prose.appendChild(sep);
+          }
         });
 
         row.appendChild(dateCol);
-        row.appendChild(entriesCol);
+        row.appendChild(prose);
         body.appendChild(row);
       });
     }
