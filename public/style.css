@@ -326,7 +326,8 @@ body {
 }
 
 .mood-row {
-  display: flex;
+  /* Mood emoji picker hidden from the compose form for now (kept in data/feature). */
+  display: none;
   gap: 10px;
   flex-wrap: wrap;
 }
@@ -366,6 +367,7 @@ body {
 .save-entry-btn {
   height: 46px;
   padding: 0 24px;
+  margin-left: auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -551,7 +553,6 @@ body {
   color: var(--text);
   letter-spacing: -.005em;
   text-wrap: pretty;
-  text-indent: 1.4em;
 }
 
 .entry-run {
@@ -583,10 +584,8 @@ body {
 }
 
 .entry-icon-mood {
-  width: .85em;
-  margin: 0 .1em;
-  vertical-align: -.1em;
-  color: var(--muted);
+  /* Mood emoji hidden from the log view for now (kept in data/feature). */
+  display: none;
 }
 
 .entry-icon-followup {
@@ -613,6 +612,23 @@ body {
   font-size: .7em;
   vertical-align: .12em;
   margin: 0 .15em;
+}
+
+.day-bookend {
+  display: inline-block;
+  width: .8em;
+  height: .8em;
+  color: var(--muted);
+  opacity: .6;
+  vertical-align: -.05em;
+}
+
+.day-bookend-sun {
+  margin-right: .5em;
+}
+
+.day-bookend-moon {
+  margin-left: .5em;
 }
 
 .followup-tooltip {

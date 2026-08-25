@@ -141,6 +141,14 @@
       return `<svg width="100%" height="100%" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="20" cy="20" r="18"/><circle cx="14" cy="17" r="2" fill="currentColor" stroke="none"/><circle cx="26" cy="17" r="2" fill="currentColor" stroke="none"/><path d="${m.mouth}"/></svg>`;
     }
 
+    function sunGlyphSvg() {
+      return '<svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8"/></svg>';
+    }
+
+    function moonGlyphSvg() {
+      return '<svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5z"/></svg>';
+    }
+
     function localDateFromISO(iso) {
       const [y, m, d] = iso.split('-').map(Number);
       return new Date(y, m - 1, d);
@@ -233,7 +241,18 @@
           return hasText || hasMood;
         });
 
-        visible.forEach((e, i) => {
+        if (visible.length) {
+          const sun = document.createElement('span');
+          sun.className = 'day-bookend day-bookend-sun';
+          sun.innerHTML = sunGlyphSvg();
+          prose.appendChild(sun);
+        }
+
+        // Reversed so entries read chronologically (earliest first, latest last)
+        // within the day, even though the API returns newest-first overall.
+        const chronological = visible.slice().reverse();
+
+        chronological.forEach((e, i) => {
           const hasMood = e.mood !== null && e.mood !== undefined;
           const hasText = e.text && String(e.text).trim();
           const hasFollowup = e.followupAnswer && String(e.followupAnswer).trim();
@@ -290,7 +309,7 @@
 
           prose.appendChild(run);
 
-          if (i < visible.length - 1) {
+          if (i < chronological.length - 1) {
             const sep = document.createElement('span');
             sep.className = 'entry-sep';
             sep.textContent = ' • ';
@@ -298,16 +317,37 @@
           }
         });
 
+        if (visible.length) {
+          const moon = document.createElement('span');
+          moon.className = 'day-bookend day-bookend-moon';
+          moon.innerHTML = moonGlyphSvg();
+          prose.appendChild(moon);
+        }
+
         row.appendChild(dateCol);
         row.appendChild(prose);
         body.appendChild(row);
       });
     }
 
-    const PER_PAGE = 15;
+    const DAYS_PER_PAGE = 5;
     let allEntries = [];
     let page = 0;
     let gratitudeOnly = false;
+
+    // Entries arrive sorted by date desc, order desc — group in that order.
+    function groupByDate(entries) {
+      const groups = [];
+      let current = null;
+      entries.forEach((e) => {
+        if (!current || current.date !== e.date) {
+          current = { date: e.date, entries: [] };
+          groups.push(current);
+        }
+        current.entries.push(e);
+      });
+      return groups;
+    }
 
     const pager = document.getElementById('pager');
     const pagerLabel = document.getElementById('pager-label');
@@ -327,10 +367,12 @@
 
     function renderPage() {
       const filtered = gratitudeOnly ? allEntries.filter((e) => e.gratitude) : allEntries;
-      const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+      const groups = groupByDate(filtered);
+      const totalPages = Math.max(1, Math.ceil(groups.length / DAYS_PER_PAGE));
       page = Math.min(page, totalPages - 1);
-      const start = page * PER_PAGE;
-      const pageItems = filtered.slice(start, start + PER_PAGE);
+      const startDay = page * DAYS_PER_PAGE;
+      const pageGroups = groups.slice(startDay, startDay + DAYS_PER_PAGE);
+      const pageItems = pageGroups.flatMap((g) => g.entries);
 
       if (!filtered.length && gratitudeOnly) {
         const body = document.getElementById('log-body');
@@ -347,7 +389,7 @@
 
       if (totalPages > 1) {
         pager.style.display = '';
-        pagerLabel.textContent = `${start + 1}–${start + pageItems.length} of ${filtered.length}`;
+        pagerLabel.textContent = `${pageItems.length} entries · days ${startDay + 1}–${startDay + pageGroups.length} of ${groups.length}`;
         pagerPrev.disabled = page === 0;
         pagerNext.disabled = page >= totalPages - 1;
       } else {
@@ -359,7 +401,8 @@
       if (page > 0) { page -= 1; renderPage(); window.scrollTo({ top: 0 }); }
     });
     pagerNext.addEventListener('click', () => {
-      const totalPages = Math.max(1, Math.ceil(allEntries.length / PER_PAGE));
+      const filtered = gratitudeOnly ? allEntries.filter((e) => e.gratitude) : allEntries;
+      const totalPages = Math.max(1, Math.ceil(groupByDate(filtered).length / DAYS_PER_PAGE));
       if (page < totalPages - 1) { page += 1; renderPage(); window.scrollTo({ top: 0 }); }
     });
 
