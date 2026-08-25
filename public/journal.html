@@ -81,11 +81,6 @@
       textarea.style.height = textarea.scrollHeight + 'px';
     }
 
-    function proseDisplayText(text) {
-      const raw = String(text).trim();
-      return /[.!?…]$/.test(raw) ? raw : raw + '.';
-    }
-
     function startEdit(run, textEl, entry) {
       if (run.classList.contains('editing')) return;
       run.classList.add('editing');
@@ -108,7 +103,7 @@
         const newText = textarea.value.trim();
         if (save && newText && newText !== entry.text) {
           entry.text = newText;
-          textEl.textContent = proseDisplayText(newText);
+          textEl.textContent = newText;
           textarea.replaceWith(textEl);
           try {
             await fetch(`/api/journal/entries/${encodeURIComponent(entry.id)}`, {
@@ -120,7 +115,7 @@
             console.error('update failed', err);
           }
         } else {
-          textEl.textContent = proseDisplayText(entry.text);
+          textEl.textContent = entry.text;
           textarea.replaceWith(textEl);
         }
       }
@@ -257,7 +252,7 @@
           if (hasText) {
             const textEl = document.createElement('span');
             textEl.className = 'entry-text-inline';
-            textEl.textContent = proseDisplayText(e.text);
+            textEl.textContent = e.text.trim();
             textEl.tabIndex = 0;
             textEl.addEventListener('click', () => startEdit(run, textEl, e));
             run.appendChild(textEl);
