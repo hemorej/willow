@@ -47,10 +47,13 @@
       <div class="journal-home-inner">
         <div class="compose-header-row">
           <p class="date-eyebrow" id="date-eyebrow"></p>
-          <button type="button" class="gratitude-toggle" id="gratitude-toggle" title="Answer a gratitude prompt">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12c0-3 2-5 6-5 0 3-2 5-6 5z"/><path d="M12 14c0-3-2-5-6-5 0 3 2 5 6 5z"/></svg>
-            <span>Gratitude</span>
-          </button>
+          <div class="gratitude-wrap">
+            <button type="button" class="gratitude-toggle" id="gratitude-toggle" title="Answer a gratitude prompt (hold to pick)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12c0-3 2-5 6-5 0 3-2 5-6 5z"/><path d="M12 14c0-3-2-5-6-5 0 3 2 5 6 5z"/></svg>
+              <span>Gratitude</span>
+            </button>
+            <div class="gratitude-menu" id="gratitude-menu" hidden></div>
+          </div>
         </div>
         <h1 class="journal-greeting" id="greeting"></h1>
 
@@ -146,16 +149,76 @@
 
     const FOCUSED_PLACEHOLDER_GRATITUDE = 'Even a small thing counts';
 
-    // Gratitude toggle
+    // Gratitude toggle: tap toggles on/off with a random prompt; press-and-hold
+    // unfurls a dropdown to pick a specific prompt.
     let gratitudeOn = false;
     let gratIdx = 0;
     const gratToggle = document.getElementById('gratitude-toggle');
-    gratToggle.addEventListener('click', () => {
-      gratitudeOn = !gratitudeOn;
-      if (gratitudeOn) gratIdx = Math.floor(Math.random() * GRATITUDE_PROMPTS.length);
+    const gratMenu = document.getElementById('gratitude-menu');
+
+    function applyGratitudeState() {
       gratToggle.classList.toggle('on', gratitudeOn);
       greetingEl.textContent = gratitudeOn ? GRATITUDE_PROMPTS[gratIdx].prompt : REGULAR_HEADER;
       draft.placeholder = gratitudeOn ? FOCUSED_PLACEHOLDER_GRATITUDE : regularPlaceholder;
+    }
+
+    function setGratitude(on, idx) {
+      gratitudeOn = on;
+      if (gratitudeOn) gratIdx = idx !== undefined ? idx : Math.floor(Math.random() * GRATITUDE_PROMPTS.length);
+      applyGratitudeState();
+    }
+
+    function openGratitudeMenu() {
+      gratMenu.innerHTML = GRATITUDE_PROMPTS.map((p, i) =>
+        `<button type="button" class="gratitude-menu-item${gratitudeOn && i === gratIdx ? ' selected' : ''}" data-idx="${i}">${p.prompt}</button>`
+      ).join('');
+      gratMenu.hidden = false;
+    }
+
+    function closeGratitudeMenu() {
+      gratMenu.hidden = true;
+    }
+
+    gratMenu.addEventListener('click', (e) => {
+      const item = e.target.closest('.gratitude-menu-item');
+      if (!item) return;
+      setGratitude(true, Number(item.dataset.idx));
+      closeGratitudeMenu();
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!gratMenu.hidden && !gratMenu.contains(e.target) && e.target !== gratToggle && !gratToggle.contains(e.target)) {
+        closeGratitudeMenu();
+      }
+    });
+
+    const LONG_PRESS_MS = 450;
+    let pressTimer = null;
+    let longPressFired = false;
+
+    gratToggle.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      longPressFired = false;
+      pressTimer = setTimeout(() => {
+        longPressFired = true;
+        openGratitudeMenu();
+      }, LONG_PRESS_MS);
+    });
+
+    function cancelPress() {
+      clearTimeout(pressTimer);
+    }
+    gratToggle.addEventListener('pointerup', cancelPress);
+    gratToggle.addEventListener('pointerleave', cancelPress);
+    gratToggle.addEventListener('pointercancel', cancelPress);
+    gratToggle.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    gratToggle.addEventListener('click', () => {
+      if (longPressFired) {
+        longPressFired = false;
+        return;
+      }
+      setGratitude(!gratitudeOn);
     });
 
     // A push notification click can deep-link here with ?gratitude=1 (see
