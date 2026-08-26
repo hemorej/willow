@@ -583,13 +583,13 @@ body {
 
 .day-number {
   order: 3;
-  font: 500 15px var(--font-head);
+  font: 500 14px var(--font-body);
   color: var(--muted);
   margin: 0;
 }
 
 .day-number.today {
-  font-weight: 600;
+  font: 600 14px var(--font-body);
   color: var(--accent);
 }
 
