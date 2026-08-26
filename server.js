@@ -42,7 +42,17 @@ app.use(session({
 
 app.use(globalLimiter);
 app.use(requireAuth);
-app.use(express.static(STATIC_DIR, { maxAge: '1d' }));
+app.use(express.static(STATIC_DIR, {
+  maxAge: '1d',
+  setHeaders: (res, filePath) => {
+    // HTML, the service worker, and the manifest are unhashed shell files —
+    // an iOS home-screen webclip has no reload affordance and will otherwise
+    // sit on a stale cached copy indefinitely, pointing at old hashed assets.
+    if (filePath.endsWith('.html') || filePath.endsWith('sw.js') || filePath.endsWith('manifest.json')) {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  }
+}));
 app.get('/login', (_req, res) => res.sendFile(path.join(STATIC_DIR, 'login.html')));
 
 app.use(routes);
