@@ -4,6 +4,12 @@ const PUBLIC_PATHS = new Set(['/login', '/login.html', '/style.css', '/theme.js'
 // so the login page (rendered before authentication) needs them allowed under their hashed names too.
 const PUBLIC_HASHED_ASSET = /^\/(style|theme)(\.[A-Z0-9]{8})?\.(css|js)$/;
 
+/**
+ * Global gate (mounted after the session middleware): lets through the login
+ * page and its public assets, the login/logout API, and any request with an
+ * authenticated session. Everything else gets a `/login` redirect (page
+ * requests) or a 401 JSON body (`/api/*` requests).
+ */
 function requireAuth(req, res, next) {
   if (PUBLIC_PATHS.has(req.path) || PUBLIC_HASHED_ASSET.test(req.path) || req.path.startsWith('/fonts/')) return next();
   if (req.path === '/api/login' || req.path === '/api/logout') return next();

@@ -1,3 +1,7 @@
+// Web Push (VAPID) subscriptions and the once-a-day reminder that fans out to
+// every stored subscription. Inert unless all three VAPID_* env vars are set
+// (PUSH_ENABLED); callers still guard on PUSH_ENABLED before hitting these.
+
 const webpush = require('web-push');
 const pool = require('../db');
 const {
@@ -28,6 +32,14 @@ const ALLOWED_PUSH_HOSTS = [
   /(^|\.)push\.apple\.com$/               // Safari / iOS
 ];
 
+/**
+ * Validate a PushSubscription from the client before storing it: HTTPS endpoint
+ * on a known browser-vendor host (SSRF guard, see ALLOWED_PUSH_HOSTS) and
+ * base64url keys within sane length bounds.
+ *
+ * @param {any} sub
+ * @returns {boolean}
+ */
 function isSafeSubscription(sub) {
   if (!sub || typeof sub.endpoint !== 'string') return false;
   let url;
@@ -45,6 +57,10 @@ function isSafeSubscription(sub) {
   return true;
 }
 
+/**
+ * Upsert a (pre-validated) subscription, keyed by its endpoint URL.
+ * @param {{endpoint: string, keys: {p256dh: string, auth: string}}} sub
+ */
 async function subscribe(sub) {
   await pool.query(
     `INSERT INTO push_subscriptions (endpoint, p256dh, auth) VALUES ($1, $2, $3)
@@ -53,6 +69,10 @@ async function subscribe(sub) {
   );
 }
 
+/**
+ * Remove a subscription by endpoint (no-op if it isn't stored).
+ * @param {string} endpoint
+ */
 async function unsubscribe(endpoint) {
   await pool.query('DELETE FROM push_subscriptions WHERE endpoint = $1', [endpoint]);
 }
@@ -75,6 +95,11 @@ const REMINDER_MESSAGES = [
   'What beauty did you notice today?'
 ];
 
+/**
+ * Send one randomly-chosen reminder message to every stored subscription.
+ * Subscriptions the push service reports as gone (404/410) are deleted;
+ * other failures are logged and skipped. Never throws.
+ */
 async function sendDailyReminders() {
   const { rows } = await pool.query('SELECT id, endpoint, p256dh, auth FROM push_subscriptions');
   const body = REMINDER_MESSAGES[Math.floor(Math.random() * REMINDER_MESSAGES.length)];
@@ -97,6 +122,11 @@ async function sendDailyReminders() {
   }
 }
 
+/**
+ * Milliseconds from now until the next server-local occurrence of hour:minute
+ * (today if still ahead, otherwise tomorrow).
+ * @param {number} hour @param {number} minute @returns {number}
+ */
 function msUntilNext(hour, minute) {
   const now = new Date();
   const next = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute, 0, 0);
@@ -104,6 +134,10 @@ function msUntilNext(hour, minute) {
   return next.getTime() - now.getTime();
 }
 
+/**
+ * Start the self-rescheduling daily-reminder timer (called once at boot).
+ * No-op when push is disabled or REMINDER_TIME is malformed.
+ */
 function scheduleDailyReminder() {
   if (!PUSH_ENABLED || !REMINDER_MATCH) return;
   const hour = Number(REMINDER_MATCH[1]);

@@ -3,6 +3,7 @@ const { getLogger } = require('../lib/logger');
 
 const logger = getLogger('journal');
 
+/** POST /api/journal/entries — create an entry (and record any followup answer). 400 on validation error. */
 async function createEntry(req, res) {
   try {
     const result = await journalService.createEntry(req.body || {});
@@ -15,6 +16,7 @@ async function createEntry(req, res) {
   }
 }
 
+/** GET /api/journal/entries — all entries, newest first, decrypted. */
 async function listEntries(req, res) {
   try {
     const entries = await journalService.listEntries();
@@ -25,6 +27,7 @@ async function listEntries(req, res) {
   }
 }
 
+/** PATCH /api/journal/entries/:id — replace the entry's text. 400 if empty, 404 if absent. */
 async function updateEntry(req, res) {
   const body = req.body || {};
   const text = typeof body.text === 'string' ? body.text.trim() : '';
@@ -41,6 +44,7 @@ async function updateEntry(req, res) {
   }
 }
 
+/** POST /api/journal/followup-check — `{ date }` in; `{ show, ... }` describing whether/which followup prompt to display. */
 async function followupCheck(req, res) {
   try {
     const result = await journalService.checkFollowup(req.body?.date);

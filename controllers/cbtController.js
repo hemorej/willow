@@ -3,6 +3,7 @@ const { getLogger } = require('../lib/logger');
 
 const logger = getLogger('cbt');
 
+/** POST /api/cbt/submit — persist a thought record. Returns `{ ok, filename }`. */
 async function submit(req, res) {
   try {
     const { filename } = await cbtService.submit(req.body || {});
@@ -14,6 +15,7 @@ async function submit(req, res) {
   }
 }
 
+/** GET /api/cbt/entries — summary list, newest first. */
 async function listEntries(req, res) {
   try {
     const entries = await cbtService.listEntries();
@@ -24,6 +26,7 @@ async function listEntries(req, res) {
   }
 }
 
+/** GET /api/cbt/entries/:filename — full record; 400 on a malformed filename, 404 if absent. */
 async function getEntry(req, res) {
   try {
     const result = await cbtService.getEntry(req.params.filename);

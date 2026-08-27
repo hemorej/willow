@@ -1,3 +1,7 @@
+// App entry point. Middleware order matters and is: body parsers → request log
+// → session → rate limit → auth gate → static files → API routes. `start()`
+// runs the schema bootstrap and arms the daily push reminder before listening.
+
 require('dotenv').config({ quiet: true });
 
 const express = require('express');
@@ -57,6 +61,7 @@ app.get('/login', (_req, res) => res.sendFile(path.join(STATIC_DIR, 'login.html'
 
 app.use(routes);
 
+/** Bootstrap schema, arm the reminder scheduler, then start listening. */
 async function start() {
   await initDb();
   scheduleDailyReminder();

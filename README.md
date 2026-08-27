@@ -10,11 +10,15 @@ A small, private journaling app with two secondary self-care tools:
 
 Data is stored in a PostgreSQL database. Access is protected by a login form.
 
+Journal entry text is encrypted at rest (AES-256-GCM) when `JOURNAL_ENC_KEY` is set. An optional daily Web Push reminder can nudge you to write.
+
 ## Stack
 
-- Node.js + Express, serving plain HTML/CSS/JS
+- Node.js + Express, serving plain HTML/CSS/JS (no client framework, no bundler in dev)
 - PostgreSQL with JSONB document store (no ORM)
 - Session auth via `express-session` + `connect-pg-simple`
+- `routes/` → `controllers/` → `services/` layering; cross-cutting concerns in `middleware/` and `lib/`
+- Structured logging via `tslog`; optional Web Push via `web-push`
 
 ## Prerequisites
 
@@ -61,9 +65,12 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | `SESSION_SECRET` | Yes (prod) | Cookie signing secret. Random ephemeral value used if unset (sessions lost on restart). |
 | `NODE_ENV` | No | Set to `production` to enable secure (HTTPS-only) session cookies |
 | `PORT` | No | HTTP port (default: 3000) |
+| `LOG_LEVEL` | No | Minimum app log level (`silly`…`fatal`, default `info`) |
 | `JOURNAL_ENC_KEY` | No | 32-byte AES-256-GCM key, hex-encoded (64 hex chars). If unset, journal entry text is stored in plaintext. Generate with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. |
 | `JOURNAL_ENC_KEY_VERSION` | No | Integer version tag for `JOURNAL_ENC_KEY` (default `1`). Bump when rotating to a new key. |
 | `JOURNAL_ENC_KEY_PREV` / `JOURNAL_ENC_KEY_PREV_VERSION` | No | Previous key/version, kept only during a rotation so old rows stay readable until `pnpm run rotate-key` has rewrapped them. |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | No | Web Push VAPID keypair + `mailto:` contact. All three required to enable the daily push reminder. Generate with `npx web-push generate-vapid-keys`. |
+| `REMINDER_TIME` | No | `HH:MM` (24h, server-local) for the daily push reminder. Default `20:00`. Set `TZ` to pin the server timezone. |
 
 ## Development
 
@@ -76,11 +83,12 @@ The server serves `dist/` if it exists, otherwise falls back to `public/` direct
 
 ## How it works
 
-- All routes require an authenticated session. Unauthenticated requests are redirected to `/login`.
-- The landing page (`/`) links to both tools.
-- The quiz (`/quiz.html`) shows one BDI-II item at a time. Answers are POSTed to `/api/results` on submit.
-- The results page (`/results.html`) plots a line chart of scores over time and lists all past results.
+- All routes require an authenticated session. Unauthenticated page requests are redirected to `/login`; `/api/*` requests get a 401.
+- Request handling is layered: `routes/` (paths + per-route middleware) → `controllers/` (validate request, shape response) → `services/` (business logic + SQL). See `CLAUDE.md` for the full map.
+- The home page (`/`) is the journal compose surface (mood check-in + free-writing). `/journal.html` is the reverse-chronological log. BDI and CBT are reached from the top-bar nav pills.
+- The BDI quiz (`/quiz.html`) shows one item at a time; answers POST to `/api/results`. `/results.html` charts scores over time.
 - The thought record (`/cbt.html`) walks through 14 steps and saves to `/api/cbt/submit`. Link to `/cbt.html#list` to open the past-entries list directly.
+- If VAPID keys are configured, a toggle in the top bar subscribes the browser to a single daily push reminder (`services/pushService.js`, in-process scheduler — no cron).
 
 ## Notes on the inventory
 
@@ -102,25 +110,29 @@ willow/
 ├── package.json
 ├── pnpm-lock.yaml
 ├── .env.template          # copy to .env and fill in
-├── server.js              # Express server + all API routes
+├── server.js              # Express app wiring + startup only
 ├── db.js                  # pg.Pool singleton
-├── migrate.js             # schema creation (runs on startup)
+├── migrate.js             # schema creation (runs on startup, idempotent)
+├── config/env.js          # reads/validates every env var in one place
+├── routes/                # one Router per domain, mounted via routes/index.js
+├── controllers/           # per-domain request parsing + response shaping (no SQL)
+├── services/              # per-domain business logic + pg queries
+├── middleware/            # auth gate, CSRF, rate limits, request logging
+├── lib/
+│   ├── logger.js          # tslog named sub-loggers
+│   └── journal-crypto.js  # AES-256-GCM envelope encryption for journal content
 ├── scripts/
-│   ├── build.js           # esbuild pipeline: minifies JS/CSS, copies statics to dist/
-│   ├── create-user.js     # interactive CLI to create/update the login user
-│   └── import.js          # one-time import of legacy JSON files into PostgreSQL
+│   ├── build.js                    # esbuild pipeline: minifies JS/CSS, copies statics to dist/
+│   ├── create-user.js              # interactive CLI to create/update the login user
+│   ├── import.js / import-history.js  # one-time imports of legacy JSON into PostgreSQL
+│   ├── rotate-key.js               # rewrap every encrypted row under a new key
+│   └── backfill-encrypt-journal.js # encrypt pre-encryption plaintext rows in place
 ├── infra/
 │   ├── forge_deploy.sh    # deployment script for Forge hosting
 │   ├── nginx.conf         # nginx reverse-proxy config (all traffic → Express)
 │   └── supervisord.conf   # process manager config
-└── public/
-    ├── login.html         # login form
-    ├── index.html         # landing page
-    ├── quiz.html          # BDI-II questionnaire
-    ├── results.html       # past BDI-II results with chart
-    ├── cbt.html           # CBT thought record
-    ├── questions.js       # BDI-II questions + severity bands
-    └── style.css
+└── public/                # plain HTML/CSS/JS — login, index (journal), journal.html,
+                           # quiz.html, results.html, cbt.html, shared JS modules, sw.js
 ```
 
 ## Deployment (Forge)

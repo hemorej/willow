@@ -4,6 +4,11 @@ const { getLogger } = require('../lib/logger');
 
 const logger = getLogger('auth');
 
+/**
+ * POST /api/login — form post. On success sets `req.session.userId`, seeds a
+ * CSRF token, and redirects to the sanitised `next` param (or `/`). Every
+ * failure path redirects to `/login?error=1` with no detail.
+ */
 async function login(req, res) {
   const { username, password, next: nextPath } = req.body;
   if (!username || !password) return res.redirect('/login?error=1');
@@ -25,10 +30,12 @@ async function login(req, res) {
   }
 }
 
+/** GET /api/logout — destroys the session and redirects to `/login`. */
 function logout(req, res) {
   req.session.destroy(() => res.redirect('/login'));
 }
 
+/** GET /api/csrf-token — returns `{ csrfToken }` for the SPA to send back in the `x-csrf-token` header. */
 function csrfToken(req, res) {
   res.json({ csrfToken: ensureCsrfToken(req) });
 }

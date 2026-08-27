@@ -3,11 +3,13 @@ const { getLogger } = require('../lib/logger');
 
 const logger = getLogger('push');
 
+/** GET /api/push/public-key — the VAPID public key for `PushManager.subscribe`; 503 if push is unconfigured. */
 function publicKey(_req, res) {
   if (!pushService.PUSH_ENABLED) return res.status(503).json({ error: 'Push is not configured' });
   res.json({ publicKey: pushService.VAPID_PUBLIC_KEY });
 }
 
+/** POST /api/push/subscribe — store a PushSubscription; 400 if it fails the SSRF/shape checks, 503 if unconfigured. */
 async function subscribe(req, res) {
   if (!pushService.PUSH_ENABLED) return res.status(503).json({ error: 'Push is not configured' });
   const sub = req.body || {};
@@ -23,6 +25,7 @@ async function subscribe(req, res) {
   }
 }
 
+/** POST /api/push/unsubscribe — remove the subscription with the given `{ endpoint }`. */
 async function unsubscribe(req, res) {
   const endpoint = req.body && req.body.endpoint;
   if (typeof endpoint !== 'string' || !endpoint) return res.status(400).json({ error: 'endpoint is required' });

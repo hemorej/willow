@@ -3,6 +3,7 @@ const { getLogger } = require('../lib/logger');
 
 const logger = getLogger('bdi');
 
+/** POST /api/results — validate the `answers` array, score it, persist. Returns `{ ok, id, totalScore }`. */
 async function submitResult(req, res) {
   const body = req.body || {};
   if (!Array.isArray(body.answers)) {
@@ -18,6 +19,7 @@ async function submitResult(req, res) {
   }
 }
 
+/** GET /api/results — summary list, newest first. */
 async function listResults(req, res) {
   try {
     const results = await bdiService.listResults();
@@ -28,6 +30,7 @@ async function listResults(req, res) {
   }
 }
 
+/** GET /api/results/:id — full record; 400 on a malformed id, 404 if absent. */
 async function getResult(req, res) {
   try {
     const result = await bdiService.getResult(req.params.id);

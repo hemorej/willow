@@ -1,5 +1,11 @@
+// Schema bootstrap, run once at server start (see server.js `start()`).
+// Idempotent: every statement is CREATE TABLE / INDEX / ADD COLUMN ... IF NOT
+// EXISTS, so it doubles as the (forward-only) migration mechanism — add new
+// DDL here rather than maintaining separate migration files.
+
 const pool = require('./db');
 
+/** Create/upgrade all tables and indexes. Safe to call repeatedly. */
 async function initDb() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (

@@ -1,3 +1,8 @@
+// Persistence for journal entries and their occasional reflective "followups".
+// Entry text and followup answers are encrypted at rest via lib/journal-crypto
+// (the flat `body` column and the JSONB `data` record both hold ciphertext);
+// `mood`, dates and the gratitude flag stay in the clear for querying.
+
 const crypto = require('crypto');
 const pool = require('../db');
 const journalCrypto = require('../lib/journal-crypto');
@@ -76,10 +81,19 @@ const FOLLOWUP_STATEMENTS = [
 
 const FOLLOWUP_THEMES = [...Object.keys(FOLLOWUP_QUESTIONS), 'statement'];
 
+/** True if `date` is a "YYYY-MM-DD" string (format only, not calendar-validity). */
 function isValidDate(date) {
   return typeof date === 'string' && JOURNAL_DATE.test(date);
 }
 
+/**
+ * Validate and persist a new journal entry, encrypting its text. If a
+ * `followupId` is supplied, the matching (still-unanswered) followup row is
+ * updated with the answer and linked to this entry.
+ *
+ * @param {object} body {text, mood 0-4, date, gratitude, gratitudeTag, followupId, followupAnswer}
+ * @returns {Promise<{error: string} | {entry: object}>} `error` for validation failures.
+ */
 async function createEntry(body) {
   const text = typeof body.text === 'string' ? body.text.trim() : '';
   const mood = Number.isInteger(body.mood) && body.mood >= 0 && body.mood <= 4 ? body.mood : null;
@@ -115,6 +129,12 @@ async function createEntry(body) {
   return { entry: record };
 }
 
+/**
+ * All entries, newest-first, with any answered followup joined in and all
+ * ciphertext fields decrypted for the client.
+ *
+ * @returns {Promise<Array<object>>}
+ */
 async function listEntries() {
   const { rows } = await pool.query(
     `SELECT je.id, je.entry_date, je.entry_order, je.mood, je.body, je.gratitude, je.gratitude_tag,
@@ -137,6 +157,14 @@ async function listEntries() {
   }));
 }
 
+/**
+ * Replace an entry's body text (re-encrypting both the `body` column and the
+ * `text` field inside the JSONB record). Only the text is editable.
+ *
+ * @param {string} id
+ * @param {string} text Already trimmed and non-empty (checked in the controller)
+ * @returns {Promise<{notFound: true} | {text: string}>}
+ */
 async function updateEntry(id, text) {
   const { rows } = await pool.query('SELECT data FROM journal_entries WHERE id = $1', [id]);
   if (!rows.length) return { notFound: true };
@@ -149,6 +177,15 @@ async function updateEntry(id, text) {
   return { text };
 }
 
+/**
+ * Decide whether to show a reflective followup prompt for `date`, and if so,
+ * pick one and log it in journal_followups (so it counts as "shown" even if
+ * never answered). At most one per day; forced when {@link FOLLOWUP_MIN_GAP_DAYS}
+ * have passed since the last one, otherwise a {@link FOLLOWUP_CHANCE} coin flip.
+ *
+ * @param {string} date "YYYY-MM-DD"
+ * @returns {Promise<{error: string} | {show: false} | {show: true, id: number, theme: string, kind: 'question'|'statement', question: string}>}
+ */
 async function checkFollowup(date) {
   if (!isValidDate(date)) return { error: 'A valid date (YYYY-MM-DD) is required' };
 
@@ -168,6 +205,8 @@ async function checkFollowup(date) {
   const show = daysSince >= FOLLOWUP_MIN_GAP_DAYS || Math.random() < FOLLOWUP_CHANCE;
   if (!show) return { show: false };
 
+  // Pick a theme, then a random line from that theme's set. `pool_` is the
+  // candidate array (trailing underscore avoids shadowing the pg `pool`).
   const theme = FOLLOWUP_THEMES[Math.floor(Math.random() * FOLLOWUP_THEMES.length)];
   const kind = theme === 'statement' ? 'statement' : 'question';
   const pool_ = kind === 'statement' ? FOLLOWUP_STATEMENTS : FOLLOWUP_QUESTIONS[theme];

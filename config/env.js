@@ -1,3 +1,8 @@
+// Central place that reads the environment. Requiring this module has side
+// effects: it logs a warning for each missing/invalid setting and derives a
+// few flags (STATIC_DIR, PUSH_ENABLED). Missing secrets fall back to safe
+// dev defaults (an ephemeral SESSION_SECRET, push disabled) rather than throwing.
+
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -7,9 +12,12 @@ const logger = getLogger('config');
 
 const PORT = process.env.PORT || 3000;
 
+// Serve the built, content-hashed assets from dist/ when present (production),
+// otherwise the raw sources in public/ (local dev with no build step).
 const DIST_DIR = path.join(__dirname, '..', 'dist');
 const STATIC_DIR = fs.existsSync(DIST_DIR) ? DIST_DIR : path.join(__dirname, '..', 'public');
 
+// A generated secret works but invalidates every existing session on restart.
 if (!process.env.SESSION_SECRET) {
   logger.warn('config.session_secret_missing');
 }
