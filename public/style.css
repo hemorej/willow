@@ -186,13 +186,110 @@ body {
   white-space: nowrap;
 }
 
+/* Wide viewports: the secondary items sit inline in the cluster, no kebab. */
+.nav-extra {
+  display: contents;
+}
+
+.nav-more-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.nav-more-btn svg {
+  display: block;
+}
+
 @media (max-width: 560px) {
   .top-bar-right {
     margin-right: 46px;
   }
 
-  .push-toggle {
+  /* Narrow viewports: keep only the Log pill inline; collapse the rest
+     (BDI, CBT, reminders toggle) behind the kebab button. */
+  .nav-cluster {
+    position: relative;
+    gap: 6px;
+  }
+
+  .nav-more-btn {
+    display: inline-flex;
+  }
+
+  .nav-cluster.nav-open .nav-more-btn {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .nav-extra {
     display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 60;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    min-width: 172px;
+    padding: 8px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .16);
+  }
+
+  .nav-cluster.nav-open .nav-extra {
+    display: flex;
+  }
+
+  .nav-extra .nav-pill,
+  .nav-extra .push-toggle {
+    width: auto;
+    height: auto;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 9px 12px;
+    border-color: transparent;
+    background: transparent;
+    color: var(--text);
+    font: 600 13px var(--font-body);
+  }
+
+  .nav-extra .nav-pill.active,
+  .nav-extra .push-toggle.is-active {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .nav-extra .nav-pill:hover,
+  .nav-extra .push-toggle:hover,
+  .nav-extra .push-toggle.is-active:hover {
+    border-color: transparent;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .nav-extra .nav-pill-label {
+    display: inline;
+  }
+
+  .nav-extra .push-toggle .push-toggle-label {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
   }
 
   .nav-pill {

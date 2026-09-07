@@ -12,7 +12,7 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
 
 // sw.js must be served unhashed from the root (Web Push service worker scope requirement).
 const UNHASHED_JS = ['sw.js'];
-const HASHED_JS = ['questions.js', 'moods.js', 'gratitude.js', 'theme.js', 'push.js'];
+const HASHED_JS = ['questions.js', 'moods.js', 'gratitude.js', 'theme.js', 'push.js', 'nav.js'];
 
 /** Minify JS/CSS with esbuild (content-hashed filenames, except sw.js) and copy remaining static assets to dist/. */
 async function build() {

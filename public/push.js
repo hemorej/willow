@@ -67,12 +67,22 @@
       return;
     }
 
-    const registration = await navigator.serviceWorker.register('/sw.js');
-    await navigator.serviceWorker.ready;
-
-    const existing = await registration.pushManager.getSubscription();
-    setButtonState(button, !!existing && Notification.permission === 'granted');
+    // Reveal the toggle as soon as we know the browser supports Web Push.
+    // Don't gate visibility on service-worker registration succeeding — it
+    // can be slow, or disabled outright in browser dev tooling, and the
+    // button still needs to show (and collapse into the mobile nav menu).
     button.hidden = false;
+
+    try {
+      await navigator.serviceWorker.register('/sw.js');
+      const registration = await navigator.serviceWorker.ready;
+      const existing = await registration.pushManager.getSubscription();
+      setButtonState(button, !!existing && Notification.permission === 'granted');
+    } catch (err) {
+      // Leave the button in its default "off" state; a real failure will
+      // surface when the user actually tries to enable reminders.
+      console.warn('push: could not check existing subscription', err);
+    }
 
     button.addEventListener('click', async () => {
       button.disabled = true;
@@ -87,6 +97,8 @@
           if (permission !== 'granted') return;
         }
 
+        await navigator.serviceWorker.register('/sw.js');
+        const registration = await navigator.serviceWorker.ready;
         const subscription = await registration.pushManager.getSubscription();
         if (subscription) {
           await unsubscribe(button);
