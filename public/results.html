@@ -55,6 +55,16 @@
         <a class="btn" id="cta" href="/quiz.html" style="display:none">Start a new test</a>
       </div>
 
+      <div class="results-filter" id="results-filter" style="display:none">
+        <label for="range-select">Time range</label>
+        <select id="range-select" class="range-select">
+          <option value="all">All time</option>
+          <option value="1y">1 year</option>
+          <option value="6m">6 months</option>
+          <option value="1m">1 month</option>
+        </select>
+      </div>
+
       <div id="chart-wrap" class="chart-wrap" style="display:none">
         <svg id="chart" viewBox="0 0 720 240" width="100%" height="230" preserveAspectRatio="none"></svg>
         <div id="note-tooltip" class="note-tooltip"></div>
@@ -95,8 +105,16 @@
     const pagerPrev  = document.getElementById('pager-prev');
     const pagerNext  = document.getElementById('pager-next');
 
+    const filterWrap  = document.getElementById('results-filter');
+    const rangeSelect = document.getElementById('range-select');
+
+    const RANGE_DAYS = { all: Infinity, '1y': 365, '6m': 183, '1m': 31 };
+    const RANGE_LABEL = { all: '', '1y': 'the past year', '6m': 'the past 6 months', '1m': 'the past month' };
+    let currentRange = '6m';
+
     const PER_PAGE = 10;
-    let allItems = [];
+    let rawItems = [];   // every result, newest first
+    let allItems = [];   // results within the selected time range
     let page = 0;
 
     function fmtDate(iso) {
@@ -259,6 +277,39 @@
       if (page < totalPages - 1) { page += 1; renderPage(); }
     });
 
+    function applyRange() {
+      const days = RANGE_DAYS[currentRange];
+      if (days === Infinity) {
+        allItems = rawItems.slice();
+      } else {
+        const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+        allItems = rawItems.filter((it) => new Date(it.takenAt).getTime() >= cutoff);
+      }
+      page = 0;
+
+      const scope = RANGE_LABEL[currentRange] ? ` in ${RANGE_LABEL[currentRange]}` : '';
+      const n = allItems.length;
+      if (n === 0) {
+        subEl.textContent = `No results${scope}.`;
+        chartWrap.style.display = 'none';
+        legend.innerHTML = '';
+        listEl.innerHTML = '';
+        pager.style.display = 'none';
+        return;
+      }
+
+      subEl.textContent =
+        `${n} result${n === 1 ? '' : 's'}${scope}, sorted from newest to oldest.`;
+      chartWrap.style.display = '';
+      buildChart(allItems);
+      renderPage();
+    }
+
+    rangeSelect.addEventListener('change', () => {
+      currentRange = rangeSelect.value;
+      applyRange();
+    });
+
     async function load() {
       let items = [];
       try {
@@ -276,14 +327,11 @@
         return;
       }
 
-      allItems = items;
-      page = 0;
-
-      subEl.textContent = `${items.length} result${items.length === 1 ? '' : 's'}, sorted from newest to oldest.`;
+      rawItems = items;
       cta.style.display = '';
-      chartWrap.style.display = '';
-      buildChart(items);
-      renderPage();
+      filterWrap.style.display = '';
+      rangeSelect.value = currentRange;
+      applyRange();
     }
 
     load();
