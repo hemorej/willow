@@ -226,8 +226,17 @@
         });
         icon.addEventListener('mousemove', (e) => {
           const wrap = chartWrap.getBoundingClientRect();
-          noteTooltip.style.left = (e.clientX - wrap.left + 14) + 'px';
-          noteTooltip.style.top  = (e.clientY - wrap.top  - 12) + 'px';
+          const tip  = noteTooltip.getBoundingClientRect();
+          const margin = 8;
+          let left = e.clientX - wrap.left + 14;
+          let top  = e.clientY - wrap.top  - 12;
+          // Flip to the left of the cursor if it would overflow the right edge,
+          // then clamp so the box always stays fully inside the chart frame.
+          if (left + tip.width + margin > wrap.width) left = e.clientX - wrap.left - tip.width - 14;
+          left = Math.max(margin, Math.min(left, wrap.width  - tip.width  - margin));
+          top  = Math.max(margin, Math.min(top,  wrap.height - tip.height - margin));
+          noteTooltip.style.left = left + 'px';
+          noteTooltip.style.top  = top + 'px';
         });
         icon.addEventListener('mouseleave', () => {
           noteTooltip.style.display = 'none';

@@ -1188,7 +1188,7 @@ button:disabled, .btn:disabled {
   border-radius: 8px;
   font-size: 13px;
   line-height: 1.45;
-  max-width: 220px;
+  width: 220px;
   white-space: pre-wrap;
   word-break: break-word;
   pointer-events: none;
