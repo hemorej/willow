@@ -1198,16 +1198,46 @@ button:disabled, .btn:disabled {
 }
 
 .results-list li {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 74px;
+  grid-template-areas: "date meta score";
   align-items: center;
-  gap: 14px;
-  padding: 13px 0;
+  gap: 18px;
+  padding: 15px 0;
   border-bottom: 1px solid var(--border);
 }
 
 .results-list li:last-child { border-bottom: none; }
 
-.results-list .date { flex: 1; font-size: 15px; }
+.results-list .date {
+  grid-area: date;
+  font: 500 16px var(--font-body);
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.results-list .meta {
+  grid-area: meta;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.results-list .time {
+  font: 400 14px var(--font-body);
+  color: var(--muted);
+  white-space: nowrap;
+  min-width: 74px;          /* keeps the pill column aligned down the list */
+  text-align: right;
+}
+
+.results-list .severity-pill {
+  min-width: 92px;
+  text-align: center;
+  white-space: nowrap;
+}
+
 .results-list .note-flag {
   display: inline-flex;
   align-items: center;
@@ -1223,25 +1253,33 @@ button:disabled, .btn:disabled {
   cursor: default;
 }
 .results-list .score {
+  grid-area: score;
+  font: 600 16px var(--font-body);
+  color: var(--text);
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  min-width: 64px;
   text-align: right;
-  font-size: 15px;
 }
 
 .pager {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 12px;
-  margin-top: 22px;
+  margin-top: 24px;
+}
+
+.pager .secondary {
+  min-height: 42px;
+  padding: 0 18px;
+  white-space: nowrap;      /* this is what stopped "← Newer" wrapping */
 }
 
 .pager-label {
   font-size: 13px;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .empty {
@@ -1291,6 +1329,44 @@ button:disabled, .btn:disabled {
   pointer-events: none;
   z-index: 10;
   box-shadow: 0 4px 12px rgba(0,0,0,.15);
+}
+
+@media (max-width: 560px) {
+  .card { padding: 22px 18px; }
+
+  .results-top { margin-bottom: 18px; }
+  .results-top .btn { width: 100%; text-align: center; padding: 12px 20px; }
+
+  .results-filter { justify-content: space-between; margin-bottom: 16px; }
+
+  .chart-wrap { padding: 12px 10px 6px; }
+
+  .legend {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 14px;
+    margin: 14px 2px 20px;
+  }
+
+  .results-list li {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "date  score"
+      "meta  score";
+    row-gap: 5px;
+    column-gap: 12px;
+    padding: 12px 0;
+  }
+
+  .results-list .date { font-size: 15px; line-height: 1.3; }
+
+  .results-list .meta { justify-content: flex-start; gap: 8px; }
+
+  .results-list .time { min-width: 0; text-align: left; font-size: 13px; }
+
+  .results-list .severity-pill { min-width: 0; padding: 2px 9px; font-size: 11px; }
+
+  .pager .secondary { min-height: 44px; padding: 0 14px; font-size: 14px; }
 }
 
 /* ---------------------------------------------------------------------- */

@@ -71,7 +71,7 @@
       </div>
 
       <div id="chart-wrap" class="chart-wrap" style="display:none">
-        <svg id="chart" viewBox="0 0 720 240" width="100%" height="230" preserveAspectRatio="none"></svg>
+        <svg id="chart"></svg>
         <div id="note-tooltip" class="note-tooltip"></div>
       </div>
       <div class="legend" id="legend"></div>
@@ -130,6 +130,14 @@
       } catch (e) { return iso; }
     }
 
+    function fmtRowDate(iso) {
+      const d = new Date(iso);
+      return {
+        date: d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
+        time: d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+      };
+    }
+
     function buildChart(items) {
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       const gridStroke = isDark ? '#ffffff14' : '#00000018';
@@ -139,8 +147,24 @@
 
       // items are sorted desc by takenAt; chart wants ascending in time.
       const data = [...items].reverse();
-      const W = 720, H = 240;
-      const padL = 34, padR = 14, padT = 14, padB = 34;
+
+      // Inner width of .chart-wrap, minus its own horizontal padding.
+      const cs   = getComputedStyle(chartWrap);
+      const W    = Math.max(240, Math.round(
+                     chartWrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)));
+      const narrow = W < 380;
+
+      const H  = narrow ? 212 : (W < 660 ? 268 : 300);   // tall chart, signed off
+      const fs = narrow ? 9 : 10;                        // axis label size
+      const padL = narrow ? 24 : 32, padR = 12, padT = 12, padB = narrow ? 24 : 28;
+      const labelEvery = narrow ? 3 : (W < 660 ? 2 : 1); // x labels thin out on phones
+
+      chart.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      chart.setAttribute('width', '100%');
+      chart.setAttribute('height', String(H));
+      chart.style.display = 'block';
+      // NOTE: no preserveAspectRatio — the default (xMidYMid meet) is what we want.
+
       const innerW = W - padL - padR;
       const innerH = H - padT - padB;
 
@@ -173,7 +197,7 @@
           `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="${gridStroke}" stroke-width="1" stroke-dasharray="2,3" />`
         );
         parts.push(
-          `<text x="${padL - 6}" y="${y + 4}" font-size="10" fill="${axisColor}" text-anchor="end" font-family="Hanken Grotesque, sans-serif">${t}</text>`
+          `<text x="${padL - 6}" y="${y + 4}" font-size="${fs}" fill="${axisColor}" text-anchor="end" font-family="Hanken Grotesque, sans-serif">${t}</text>`
         );
       });
 
@@ -193,30 +217,30 @@
       }
 
       // X labels (every result if few; sample otherwise)
-      const labelEvery = Math.max(1, Math.ceil(n / 6));
       data.forEach((it, i) => {
         const x = xFor(i);
         const y = yFor(it.totalScore);
         const band = severityFor(it.totalScore);
         parts.push(
-          `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="${band.color}" stroke="var(--card)" stroke-width="1.5">
+          `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${narrow ? 3.5 : 4}" fill="${band.color}" stroke="var(--card)" stroke-width="1.5">
              <title>${fmtDate(it.takenAt)} — score ${it.totalScore} (${band.name})</title>
            </circle>`
         );
         if (i % labelEvery === 0 || i === n - 1) {
           const dt = new Date(it.takenAt);
           const label = `${dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
+          const anchor = i === 0 ? 'start' : (i === n - 1 ? 'end' : 'middle');
           parts.push(
-            `<text x="${x.toFixed(1)}" y="${(padT + innerH + 18).toFixed(1)}" font-size="10" fill="${axisColor}" text-anchor="middle" font-family="Hanken Grotesque, sans-serif">${label}</text>`
+            `<text x="${x.toFixed(1)}" y="${(padT + innerH + 18).toFixed(1)}" font-size="${fs}" fill="${axisColor}" text-anchor="${anchor}" font-family="Hanken Grotesque, sans-serif">${label}</text>`
           );
         }
 
         if (it.note) {
           const nx = (x + 1).toFixed(1);
-          const ny = (y - 16).toFixed(1);
+          const ny = (y - (narrow ? 14 : 16)).toFixed(1);
           parts.push(
             `<g class="note-icon" data-note="${escAttr(it.note)}" style="cursor:pointer">` +
-              `<circle cx="${nx}" cy="${ny}" r="7" fill="var(--accent)" stroke="var(--card)" stroke-width="1.5"/>` +
+              `<circle cx="${nx}" cy="${ny}" r="${narrow ? 6.5 : 7}" fill="var(--accent)" stroke="var(--card)" stroke-width="1.5"/>` +
               `<text x="${nx}" y="${ny}" font-size="9" fill="var(--on-accent)" text-anchor="middle" dy="3.2" font-family="sans-serif" pointer-events="none">✎</text>` +
             `</g>`
           );
@@ -264,11 +288,15 @@
       listEl.innerHTML = '';
       pageItems.forEach((it) => {
         const band = severityFor(it.totalScore);
-        const li = document.createElement('li');
+        const dt   = fmtRowDate(it.takenAt);
+        const li   = document.createElement('li');
         li.innerHTML = `
-          <span class="date">${fmtDate(it.takenAt)}</span>
-          ${it.note ? `<span class="note-flag" title="${escAttr(it.note)}">&#9998;</span>` : ''}
-          <span class="severity-pill" style="background:${band.color}">${band.name}</span>
+          <span class="date">${dt.date}</span>
+          <span class="meta">
+            <span class="time">${dt.time}</span>
+            ${it.note ? `<span class="note-flag" title="${escAttr(it.note)}">&#9998;</span>` : ''}
+            <span class="severity-pill" style="background:${band.color}">${band.name}</span>
+          </span>
           <span class="score">${it.totalScore}/60</span>
         `;
         listEl.appendChild(li);
@@ -355,6 +383,16 @@
     window.addEventListener('willow:theme-change', () => {
       if (allItems.length) buildChart(allItems);
     });
+
+    // Redraw on resize — the chart is now width-dependent.
+    let chartResizeRaf = null;
+    const ro = new ResizeObserver(() => {
+      if (chartResizeRaf) cancelAnimationFrame(chartResizeRaf);
+      chartResizeRaf = requestAnimationFrame(() => {
+        if (allItems.length) buildChart(allItems);
+      });
+    });
+    ro.observe(chartWrap);
   </script>
   <nav class="auth-bar"><a href="/api/logout">Sign out</a></nav>
 </body>
