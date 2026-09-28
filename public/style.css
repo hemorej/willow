@@ -366,6 +366,7 @@ body {
   transition: background .15s ease, border-color .15s ease, color .15s ease;
   touch-action: manipulation;
   -webkit-touch-callout: none;
+  -webkit-user-select: none;
   user-select: none;
 }
 
