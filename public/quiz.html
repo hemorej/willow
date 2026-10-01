@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <script src="/theme.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Willow — BDI-II Quiz</title>
+  <title>Willow — Check-in</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -20,7 +20,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c0-7 3-13 11-16-1 8-4 13-11 16z"/><path d="M8.5 15.5C11 13 13 9.5 15 4"/></svg>
         </span>
         <span class="wordmark-name">Willow</span>
-        <span class="wordmark-section">— BDI-II</span>
+        <span class="wordmark-section">— Check-in</span>
       </a>
       <div class="top-bar-right">
         <nav class="nav-cluster">
@@ -31,7 +31,7 @@
           <div class="nav-extra" id="nav-extra">
             <a class="nav-pill active" href="/quiz.html">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 4-6"/></svg>
-              <span class="nav-pill-label">BDI</span>
+              <span class="nav-pill-label">Check-in</span>
             </a>
             <a class="nav-pill" href="/cbt.html">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
@@ -59,6 +59,7 @@
 
       <div id="question-block">
         <div class="q-title" id="q-counter"></div>
+        <p class="muted" style="margin:0 0 6px">Over the last 2 weeks, how often have you been bothered by:</p>
         <h2 class="q-prompt" id="q-prompt"></h2>
         <ul class="answer-list" id="answer-list"></ul>
       </div>
@@ -81,19 +82,25 @@
       <p class="summary-eyebrow">Your result</p>
       <div class="summary-score-row">
         <span class="summary-score" id="result-score">0</span>
-        <span class="summary-max">/ 60</span>
+        <span class="summary-max">/ <span id="result-max">39</span></span>
       </div>
       <div>
         <span id="result-pill" class="severity-pill">&nbsp;</span>
       </div>
       <p class="result-explainer" id="result-explainer"></p>
+      <div id="crisis-note" class="crisis-note" style="display:none" role="note">
+        <strong>You marked thoughts of being better off dead or of hurting yourself.</strong>
+        Please consider reaching out to someone you trust, a qualified professional, or a local
+        crisis line (in the US, call or text 988; elsewhere, findahelpline.com lists services by country).
+        If you may act on these thoughts, contact emergency services now.
+      </div>
       <p class="result-saved-as" id="result-saved-as"></p>
       <div class="actions">
         <a class="btn" href="/quiz.html">Take it again</a>
         <a class="btn secondary" href="/results.html">View past entries</a>
       </div>
       <p class="disclaimer">
-        This screening tool is informational, not a clinical diagnosis. If you
+        This is a personal tracking score (PHQ-9 plus four extra items), informational only and not a clinical diagnosis. If you
         are in distress or have thoughts of self-harm, please reach out to a
         qualified professional or local crisis service.
       </p>
@@ -103,6 +110,8 @@
   <script src="/questions.js"></script>
   <script src="/nav.js"></script>
   <script>
+    const INSTRUMENT = INSTRUMENTS[CURRENT_INSTRUMENT_ID];
+    const QUESTIONS = INSTRUMENT.questions;
     let _csrfToken = null;
     async function getCsrfToken() {
       if (!_csrfToken) {
@@ -217,11 +226,12 @@
             score: a.score
           };
         }),
+        instrument: INSTRUMENT.id,
         note: noteText || null
       };
 
       const totalScore = payload.answers.reduce((s, a) => s + a.score, 0);
-      const band = severityFor(totalScore);
+      const band = INSTRUMENT.severityFor(totalScore);
       payload.severity = band.name;
 
       let saveInfo = null;
@@ -241,16 +251,20 @@
       const resCard = document.getElementById('result-card');
       resCard.style.display = '';
       document.getElementById('result-score').textContent = String(totalScore);
+      document.getElementById('result-max').textContent = String(INSTRUMENT.maxScore);
+      if (payload.answers[PHQ9X_SELF_HARM_INDEX].score > 0) {
+        document.getElementById('crisis-note').style.display = '';
+      }
       const pill = document.getElementById('result-pill');
       pill.textContent = band.name;
       pill.style.background = band.color;
       const explainer = document.getElementById('result-explainer');
-      explainer.textContent = `A score in the ${band.min}–${band.max} range corresponds to ${band.name.toLowerCase()} symptoms (scaled from the standard BDI-II to account for the omitted question 9).`;
+      explainer.textContent = `Your Willow score falls in the ${band.min}–${band.max} range (${band.name.toLowerCase()}). Bands are the PHQ-9 cut-offs scaled to this 13-item version, so use the score to track change over time rather than as a clinical severity.`;
       const savedAs = document.getElementById('result-saved-as');
-      if (saveInfo && saveInfo.file) {
-        savedAs.textContent = `Saved as results/${saveInfo.file}`;
+      if (saveInfo && saveInfo.id) {
+        savedAs.textContent = 'Saved.';
       } else {
-        savedAs.textContent = 'Could not save the result file. Check the server console.';
+        savedAs.textContent = 'Could not save this result. Check the server console.';
       }
     }
 

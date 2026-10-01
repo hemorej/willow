@@ -1,4 +1,15 @@
-// BDI-II questions and severity ranges.
+// Check-in instruments.
+//
+//  - phq9x (current): the PHQ-9 (public domain) plus 4 extra items — future
+//    outlook, helplessness, self-criticism, irritability — all on the PHQ-9's
+//    0..3 frequency scale over the last 2 weeks. 13 items, max 39. The extras
+//    are added into the total, so this is NOT a validated PHQ-9 score; its
+//    bands are the PHQ-9 cut-offs (5/10/15/20) scaled by 39/27 and shown in
+//    the UI as a "Willow score", not a clinical severity.
+//  - bdi2 (archive): the legacy BDI-II, kept only so past results stay
+//    viewable. Never offered for new entries.
+
+// Archive: BDI-II questions and severity ranges.
 // Question 9 (Suicidal ideas) is intentionally omitted, so this version
 // has 20 items instead of the standard 21. Each item is scored 0..3.
 // Max possible total = 60 (vs 63 for the full BDI-II).
@@ -6,7 +17,7 @@
 // Severity ranges are the standard BDI-II cut-offs scaled by 60/63
 // (~ 0.9524) and rounded to integer cut-points.
 
-const QUESTIONS = [
+const BDI2_QUESTIONS = [
   {
     title: 'Sadness',
     answers: [
@@ -193,24 +204,82 @@ const QUESTIONS = [
 // Severity ranges, scaled from the standard BDI-II to a 0..60 max because
 // question 9 was omitted (60/63 ≈ 0.9524, rounded to integer cut-points).
 // Standard ranges: 0-13 minimal, 14-19 mild, 20-28 moderate, 29-63 severe.
-const SEVERITY_BANDS = [
+const BDI2_BANDS = [
   { name: 'Minimal',  min: 0,  max: 12, color: '#5a9e73' },
   { name: 'Mild',     min: 13, max: 18, color: '#d0a83a' },
   { name: 'Moderate', min: 19, max: 26, color: '#d98040' },
   { name: 'Severe',   min: 27, max: 60, color: '#c15a4e' }
 ];
 
+// Shared response scale for every phq9x item.
+const PHQ9X_ANSWERS = [
+  { score: 0, text: 'Not at all' },
+  { score: 1, text: 'Several days' },
+  { score: 2, text: 'More than half the days' },
+  { score: 3, text: 'Nearly every day' }
+];
+
+const PHQ9X_PROMPTS = [
+  'Little interest or pleasure in doing things',
+  'Feeling down, depressed or hopeless',
+  'Trouble falling or staying asleep, or sleeping too much',
+  'Feeling tired or having little energy',
+  'Poor appetite or overeating',
+  'Feeling bad about yourself \u2013 or that you are a failure or have let yourself or your family down',
+  'Trouble concentrating on things, such as reading the newspaper or watching television',
+  'Moving or speaking so slowly that other people could have noticed. Or the opposite \u2013 being so fidgety or restless that you have been moving around a lot more than usual',
+  'Thoughts that you would be better off dead, or of hurting yourself in some way',
+  // Extras (original wording, not from the BDI-II or PROMIS):
+  'Feeling hopeless or pessimistic about the future',
+  'Feeling helpless or stuck, as if nothing you do will help',
+  'Being harshly self-critical, or feeling worthless',
+  'Feeling irritable or having a short temper'
+];
+
+// Index of the PHQ-9 suicidal-thoughts item; a non-zero answer triggers the
+// crisis-resources note on the result screen.
+const PHQ9X_SELF_HARM_INDEX = 8;
+
+const PHQ9X_QUESTIONS = PHQ9X_PROMPTS.map((title) => ({ title, answers: PHQ9X_ANSWERS }));
+
+// PHQ-9 cut-offs 5/10/15/20 scaled by 39/27 (max score 39) and rounded.
+const PHQ9X_BANDS = [
+  { name: 'Minimal',           min: 0,  max: 6,  color: '#5a9e73' },
+  { name: 'Mild',              min: 7,  max: 13, color: '#d0a83a' },
+  { name: 'Moderate',          min: 14, max: 21, color: '#d98040' },
+  { name: 'Moderately severe', min: 22, max: 28, color: '#c9684a' },
+  { name: 'Severe',            min: 29, max: 39, color: '#c15a4e' }
+];
+
 /**
- * Returns the severity band for a given total score.
- * Falls back to the last (highest) band if no range matches.
- * @param {number} score - Total BDI-II score (0–60).
- * @returns {{ name: string, min: number, max: number, color: string }}
+ * Returns the band for a score, falling back to the highest band.
+ * @param {Array<{name: string, min: number, max: number, color: string}>} bands
+ * @param {number} score
  */
-function severityFor(score) {
-  for (const b of SEVERITY_BANDS) {
+function bandFor(bands, score) {
+  for (const b of bands) {
     if (score >= b.min && score <= b.max) return b;
   }
-  return SEVERITY_BANDS[SEVERITY_BANDS.length - 1];
+  return bands[bands.length - 1];
 }
 
-const MAX_SCORE = 60;
+const INSTRUMENTS = {
+  phq9x: {
+    id: 'phq9x',
+    label: 'Check-in',
+    questions: PHQ9X_QUESTIONS,
+    severityBands: PHQ9X_BANDS,
+    maxScore: 39,
+    severityFor: (score) => bandFor(PHQ9X_BANDS, score)
+  },
+  bdi2: {
+    id: 'bdi2',
+    label: 'BDI-II (archive)',
+    questions: BDI2_QUESTIONS,
+    severityBands: BDI2_BANDS,
+    maxScore: 60,
+    severityFor: (score) => bandFor(BDI2_BANDS, score)
+  }
+};
+
+const CURRENT_INSTRUMENT_ID = 'phq9x';

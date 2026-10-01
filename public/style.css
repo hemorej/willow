@@ -216,7 +216,7 @@ body {
   }
 
   /* Narrow viewports: keep only the Log pill inline; collapse the rest
-     (BDI, CBT, reminders toggle) behind the kebab button. */
+     (Check-in, CBT, reminders toggle) behind the kebab button. */
   .nav-cluster {
     position: relative;
     gap: 6px;
@@ -1009,7 +1009,7 @@ button:disabled, .btn:disabled {
 }
 
 /* ---------------------------------------------------------------------- */
-/* BDI quiz                                                                */
+/* Check-in quiz                                                              */
 /* ---------------------------------------------------------------------- */
 
 .q-title {
@@ -1078,7 +1078,7 @@ button:disabled, .btn:disabled {
 }
 
 /* ---------------------------------------------------------------------- */
-/* BDI result                                                              */
+/* Check-in result                                                            */
 /* ---------------------------------------------------------------------- */
 
 .severity-pill {
@@ -1137,7 +1137,7 @@ button:disabled, .btn:disabled {
 }
 
 /* ---------------------------------------------------------------------- */
-/* BDI past results                                                        */
+/* Check-in past results                                                      */
 /* ---------------------------------------------------------------------- */
 
 .results-top {
@@ -1816,4 +1816,37 @@ input[type="range"] {
   border-radius: 6px;
   color: #b54040;
   font-size: 14px;
+}
+
+/* Instrument toggle (current check-in vs BDI-II archive) */
+.instrument-toggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+.instrument-btn {
+  background: transparent;
+  color: var(--muted);
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font: 600 13px var(--font-body);
+  cursor: pointer;
+}
+.instrument-btn.active {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.instrument-note { margin: 0 0 14px; font-size: 13px; }
+
+.crisis-note {
+  margin: 20px 0 0;
+  padding: 14px 16px;
+  border-radius: var(--radius, 12px);
+  border: 1px solid var(--border);
+  font-size: 14px;
+  line-height: 1.5;
 }

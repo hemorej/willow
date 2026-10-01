@@ -1,7 +1,7 @@
 {
     "name": "willow-app",
     "version": "1.0.0",
-    "description": "Local BDI-II self-report inventory with result history",
+    "description": "Local journaling and depression self-check-in tracker",
     "main": "server.js",
     "packageManager": "pnpm@12.6.0",
     "scripts": {
