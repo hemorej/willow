@@ -29,7 +29,7 @@ async function importBdi() {
       const record = JSON.parse(fs.readFileSync(path.join(RESULTS_DIR, file), 'utf8'));
       const id = record.id || file.replace(/\.json$/, '');
       const { rowCount } = await pool.query(
-        `INSERT INTO bdi_results (id, taken_at, total_score, severity, note, data)
+        `INSERT INTO assessment_results (id, taken_at, total_score, severity, note, data)
          VALUES ($1, $2, $3, $4, $5, $6)
          ON CONFLICT (id) DO NOTHING`,
         [id, record.takenAt, record.totalScore, record.severity || null, record.note || null, record]
@@ -40,7 +40,7 @@ async function importBdi() {
     }
   }
 
-  console.log(`BDI-II: ${imported} imported, ${skipped} already present.`);
+  console.log(`BDI-II (archive): ${imported} imported, ${skipped} already present.`);
 }
 
 async function importCbt() {

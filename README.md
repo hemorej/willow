@@ -5,12 +5,12 @@
 A small, private journaling app with two secondary self-care tools:
 
 - **Journal** — a daily mood check-in and free-writing entry, with a reverse-chronological log of past entries.
-- **BDI-II Inventory** — a Beck Depression Inventory (BDI-II) self-report.
+- **Check-in** — a PHQ-9-based depression self-check (plus four extra items), with the old BDI-II history kept as an archive.
 - **CBT Thought Record** — a guided 14-step cognitive-behavioral therapy exercise.
 
 Data is stored in a PostgreSQL database. Access is protected by a login form.
 
-Journal entry text is encrypted at rest (AES-256-GCM) when `JOURNAL_ENC_KEY` is set. An optional daily Web Push reminder can nudge you to write.
+Journal entry text is encrypted at rest (AES-256-GCM) when `JOURNAL_ENC_KEY` is set. An optional daily Web Push reminder can nudge you to write, and a Thursday-morning reminder prompts a fortnightly check-in when you haven't done one in 10+ days.
 
 ## Stack
 
@@ -71,6 +71,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | `JOURNAL_ENC_KEY_PREV` / `JOURNAL_ENC_KEY_PREV_VERSION` | No | Previous key/version, kept only during a rotation so old rows stay readable until `pnpm run rotate-key` has rewrapped them. |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | No | Web Push VAPID keypair + `mailto:` contact. All three required to enable the daily push reminder. Generate with `npx web-push generate-vapid-keys`. |
 | `REMINDER_TIME` | No | `HH:MM` (24h, server-local) for the daily push reminder. Default `20:00`. Set `TZ` to pin the server timezone. |
+| `CHECKIN_REMINDER_TIME` | No | `HH:MM` (24h, server-local) for the Thursday fortnightly check-in nudge. Default `09:00`. |
 
 ## Development
 
@@ -85,21 +86,24 @@ The server serves `dist/` if it exists, otherwise falls back to `public/` direct
 
 - All routes require an authenticated session. Unauthenticated page requests are redirected to `/login`; `/api/*` requests get a 401.
 - Request handling is layered: `routes/` (paths + per-route middleware) → `controllers/` (validate request, shape response) → `services/` (business logic + SQL). See `CLAUDE.md` for the full map.
-- The home page (`/`) is the journal compose surface (mood check-in + free-writing). `/journal.html` is the reverse-chronological log. BDI and CBT are reached from the top-bar nav pills.
-- The BDI quiz (`/quiz.html`) shows one item at a time; answers POST to `/api/results`. `/results.html` charts scores over time.
+- The home page (`/`) is the journal compose surface (mood check-in + free-writing). `/journal.html` is the reverse-chronological log. The Check-in and CBT are reached from the top-bar nav pills.
+- The check-in quiz (`/quiz.html`) shows one item at a time; answers POST to `/api/results`. `/results.html` charts scores over time.
 - The thought record (`/cbt.html`) walks through 14 steps and saves to `/api/cbt/submit`. Link to `/cbt.html#list` to open the past-entries list directly.
-- If VAPID keys are configured, a toggle in the top bar subscribes the browser to a single daily push reminder (`services/pushService.js`, in-process scheduler — no cron).
+- If VAPID keys are configured, a toggle in the top bar subscribes the browser to the daily gratitude reminder and the Thursday-morning fortnightly check-in nudge (`services/pushService.js`, in-process schedulers — no cron).
 
-## Notes on the inventory
+## Notes on the check-in
 
-Question 9 of the standard BDI-II (suicidal ideas) is **omitted**, so the inventory has 20 items and a maximum total score of **60** (vs. 63 for the standard form). Severity ranges are scaled accordingly:
+The check-in is the public-domain **PHQ-9** (including item 9) plus **four extra items** — future outlook, helplessness, self-criticism and irritability — all scored 0–3 over the last 2 weeks. The extras are added into the total, so the maximum is **39** and the result is a personal "Willow score", not a validated PHQ-9 score. Bands are the PHQ-9 cut-offs scaled by 39/27:
 
-| Severity | Score (this app) | Standard BDI-II |
-|----------|-----------------|-----------------|
-| Minimal  | 0–12            | 0–13            |
-| Mild     | 13–18           | 14–19           |
-| Moderate | 19–26           | 20–28           |
-| Severe   | 27–60           | 29–63           |
+| Band              | Score | Standard PHQ-9 (0–27) |
+|-------------------|-------|-----------------------|
+| Minimal           | 0–6   | 0–4                   |
+| Mild              | 7–13  | 5–9                   |
+| Moderate          | 14–21 | 10–14                 |
+| Moderately severe | 22–28 | 15–19                 |
+| Severe            | 29–39 | 20–27                 |
+
+Older **BDI-II** results (20 items, question 9 omitted, max 60) are kept as a read-only archive and shown separately on the results page; the two scores are never converted or plotted together.
 
 This is a self-tracking tool, not a clinical diagnosis. If you are in distress or have thoughts of self-harm, please reach out to a qualified professional or local crisis service.
 

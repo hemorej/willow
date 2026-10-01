@@ -34,6 +34,14 @@ const REMINDER_TIME = process.env.REMINDER_TIME || '20:00';
 const REMINDER_MATCH = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(REMINDER_TIME);
 if (!REMINDER_MATCH) logger.warn('config.reminder_time_invalid', { reminderTime: REMINDER_TIME });
 
+// The fortnightly check-in nudge (Thursdays, see services/pushService.js)
+// fires separately, in the morning, at this server-local time.
+const CHECKIN_REMINDER_TIME = process.env.CHECKIN_REMINDER_TIME || '09:00';
+const CHECKIN_REMINDER_MATCH = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(CHECKIN_REMINDER_TIME);
+if (!CHECKIN_REMINDER_MATCH) {
+  logger.warn('config.checkin_reminder_time_invalid', { checkinReminderTime: CHECKIN_REMINDER_TIME });
+}
+
 module.exports = {
   PORT,
   STATIC_DIR,
@@ -43,5 +51,7 @@ module.exports = {
   VAPID_SUBJECT,
   PUSH_ENABLED,
   REMINDER_TIME,
-  REMINDER_MATCH
+  REMINDER_MATCH,
+  CHECKIN_REMINDER_TIME,
+  CHECKIN_REMINDER_MATCH
 };

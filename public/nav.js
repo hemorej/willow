@@ -1,5 +1,5 @@
 // Responsive top-bar menu — on narrow viewports the secondary nav links
-// (BDI, CBT) and the reminders toggle collapse behind a kebab button.
+// (Check-in, CBT) and the reminders toggle collapse behind a kebab button.
 // Wires up #nav-more-btn if the page has one; no-op otherwise.
 (function () {
   const btn = document.getElementById('nav-more-btn');

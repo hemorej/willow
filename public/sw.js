@@ -1,5 +1,5 @@
 // Willow service worker — exists solely to receive push events and show
-// the daily reminder notification. No caching/offline support is attempted.
+// the daily reminder notification (and the fortnightly check-in nudge). No caching/offline support is attempted.
 
 self.addEventListener('push', (event) => {
   let data = {};
@@ -13,7 +13,9 @@ self.addEventListener('push', (event) => {
   const options = {
     body: data.body || 'Time for your daily check-in.',
     icon: '/icon-192.png',
-    badge: '/icon-192.png'
+    badge: '/icon-192.png',
+    // Same-origin paths only; anything else falls back to the journal page.
+    data: { url: typeof data.url === 'string' && /^\/(?!\/)/.test(data.url) ? data.url : '/?gratitude=1' }
   };
 
   event.waitUntil(self.registration.showNotification(title, options));
@@ -21,13 +23,13 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const targetUrl = '/?gratitude=1';
+  const targetUrl = (event.notification.data && event.notification.data.url) || '/?gratitude=1';
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (clientList) => {
       for (const client of clientList) {
         if ('focus' in client) {
-          // Force existing tabs onto the gratitude-flagged URL too, not just
+          // Force existing tabs onto the target URL too, not just
           // new ones — navigate() is same-origin only, safe to ignore if unsupported.
           if ('navigate' in client) {
             try {

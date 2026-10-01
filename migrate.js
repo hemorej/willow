@@ -15,7 +15,14 @@ async function initDb() {
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
 
-    CREATE TABLE IF NOT EXISTS bdi_results (
+    -- Renamed from bdi_results when PHQ-9+ replaced the BDI-II.
+    DO $$ BEGIN
+      IF to_regclass('bdi_results') IS NOT NULL AND to_regclass('assessment_results') IS NULL THEN
+        ALTER TABLE bdi_results RENAME TO assessment_results;
+      END IF;
+    END $$;
+
+    CREATE TABLE IF NOT EXISTS assessment_results (
       id TEXT PRIMARY KEY,
       taken_at TIMESTAMPTZ NOT NULL,
       total_score INTEGER NOT NULL,
@@ -23,6 +30,9 @@ async function initDb() {
       note TEXT,
       data JSONB NOT NULL
     );
+
+    -- Existing rows are BDI-II; new check-ins are written as 'phq9x'.
+    ALTER TABLE assessment_results ADD COLUMN IF NOT EXISTS instrument TEXT NOT NULL DEFAULT 'bdi2';
 
     CREATE TABLE IF NOT EXISTS cbt_entries (
       id SERIAL PRIMARY KEY,
