@@ -89,7 +89,7 @@ The server serves `dist/` if it exists, otherwise falls back to `public/` direct
 - The home page (`/`) is the journal compose surface (mood check-in + free-writing). `/journal.html` is the reverse-chronological log. The Check-in and CBT are reached from the top-bar nav pills.
 - The check-in quiz (`/quiz.html`) shows one item at a time; answers POST to `/api/results`. `/results.html` charts scores over time.
 - The thought record (`/cbt.html`) walks through 14 steps and saves to `/api/cbt/submit`. Link to `/cbt.html#list` to open the past-entries list directly.
-- If VAPID keys are configured, a toggle in the top bar subscribes the browser to a single daily push reminder (`services/pushService.js`, in-process scheduler — no cron).
+- If VAPID keys are configured, a toggle in the top bar subscribes the browser to the daily gratitude reminder and the Thursday-morning fortnightly check-in nudge (`services/pushService.js`, in-process schedulers — no cron).
 
 ## Notes on the check-in
 
