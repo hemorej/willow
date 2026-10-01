@@ -45,7 +45,8 @@ async function unsubscribe(req, res) {
 async function sendTest(req, res) {
   if (!pushService.PUSH_ENABLED) return res.status(503).json({ error: 'Push is not configured' });
   try {
-    await pushService.sendDailyReminders();
+    if (req.query.checkin === '1') await pushService.sendCheckinReminder({ force: true });
+    else await pushService.sendDailyReminders();
     res.json({ ok: true });
   } catch (err) {
     logger.error('push.test_send_failed', { requestId: req.id, err: err.message });

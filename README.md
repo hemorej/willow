@@ -10,7 +10,7 @@ A small, private journaling app with two secondary self-care tools:
 
 Data is stored in a PostgreSQL database. Access is protected by a login form.
 
-Journal entry text is encrypted at rest (AES-256-GCM) when `JOURNAL_ENC_KEY` is set. An optional daily Web Push reminder can nudge you to write.
+Journal entry text is encrypted at rest (AES-256-GCM) when `JOURNAL_ENC_KEY` is set. An optional daily Web Push reminder can nudge you to write, and a Thursday-morning reminder prompts a fortnightly check-in when you haven't done one in 10+ days.
 
 ## Stack
 
@@ -71,6 +71,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | `JOURNAL_ENC_KEY_PREV` / `JOURNAL_ENC_KEY_PREV_VERSION` | No | Previous key/version, kept only during a rotation so old rows stay readable until `pnpm run rotate-key` has rewrapped them. |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | No | Web Push VAPID keypair + `mailto:` contact. All three required to enable the daily push reminder. Generate with `npx web-push generate-vapid-keys`. |
 | `REMINDER_TIME` | No | `HH:MM` (24h, server-local) for the daily push reminder. Default `20:00`. Set `TZ` to pin the server timezone. |
+| `CHECKIN_REMINDER_TIME` | No | `HH:MM` (24h, server-local) for the Thursday fortnightly check-in nudge. Default `09:00`. |
 
 ## Development
 

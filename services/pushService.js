@@ -10,7 +10,9 @@ const {
   VAPID_SUBJECT,
   PUSH_ENABLED,
   REMINDER_TIME,
-  REMINDER_MATCH
+  REMINDER_MATCH,
+  CHECKIN_REMINDER_TIME,
+  CHECKIN_REMINDER_MATCH
 } = require('../config/env');
 const { getLogger } = require('../lib/logger');
 
@@ -95,20 +97,46 @@ const REMINDER_MESSAGES = [
   'What beauty did you notice today?'
 ];
 
+// Fortnightly check-in nudge: a separate morning notification (see
+// CHECKIN_REMINDER_TIME) sent on a Thursday when the last check-in is at least
+// CHECKIN_MIN_GAP_DAYS old (or there is none). It runs alongside, not instead
+// of, the evening gratitude prompt. Keying off the last check-in, not a fixed
+// calendar parity, means taking one early or late shifts the schedule instead
+// of double-nudging. 10 days (not 14) so a check-in taken a day or two after a
+// Thursday still lands the next reminder two Thursdays later, not three.
+const CHECKIN_WEEKDAY = 4; // Thursday (Date#getDay)
+const CHECKIN_MIN_GAP_DAYS = 10;
+const CHECKIN_MESSAGE = 'Time for your fortnightly check-in.';
+const CHECKIN_URL = '/quiz.html';
+
 /**
- * Send one randomly-chosen reminder message to every stored subscription.
- * Subscriptions the push service reports as gone (404/410) are deleted;
- * other failures are logged and skipped. Never throws.
+ * Whether today (server-local) is a Thursday with no recent check-in.
+ * @param {Date} [now] @returns {Promise<boolean>}
  */
-async function sendDailyReminders() {
+async function isCheckinDue(now = new Date()) {
+  if (now.getDay() !== CHECKIN_WEEKDAY) return false;
+  const { rows } = await pool.query(
+    "SELECT MAX(taken_at) AS last FROM assessment_results WHERE instrument = 'phq9x'"
+  );
+  const last = rows[0] && rows[0].last;
+  if (!last) return true;
+  return now.getTime() - new Date(last).getTime() >= CHECKIN_MIN_GAP_DAYS * 24 * 60 * 60 * 1000;
+}
+
+/**
+ * Send a payload to every stored subscription. Subscriptions the push service
+ * reports as gone (404/410) are deleted; other failures are logged and
+ * skipped. Never throws on a send failure.
+ * @param {object} payload
+ */
+async function broadcast(payload) {
   const { rows } = await pool.query('SELECT id, endpoint, p256dh, auth FROM push_subscriptions');
-  const body = REMINDER_MESSAGES[Math.floor(Math.random() * REMINDER_MESSAGES.length)];
-  const payload = JSON.stringify({ title: 'willow', body });
+  const body = JSON.stringify(payload);
 
   for (const row of rows) {
     const subscription = { endpoint: row.endpoint, keys: { p256dh: row.p256dh, auth: row.auth } };
     try {
-      const result = await webpush.sendNotification(subscription, payload);
+      const result = await webpush.sendNotification(subscription, body);
       logger.info('push.sent', { subscriptionId: row.id, statusCode: result.statusCode });
     } catch (err) {
       if (err.statusCode === 404 || err.statusCode === 410) {
@@ -120,6 +148,24 @@ async function sendDailyReminders() {
       }
     }
   }
+}
+
+/** Send one randomly-chosen gratitude reminder to every stored subscription. */
+async function sendDailyReminders() {
+  const body = REMINDER_MESSAGES[Math.floor(Math.random() * REMINDER_MESSAGES.length)];
+  await broadcast({ title: 'willow', body });
+}
+
+/**
+ * Send the check-in nudge if one is due (or `force`d, for manual testing).
+ * @param {{force?: boolean}} [opts]
+ * @returns {Promise<boolean>} whether a reminder was sent
+ */
+async function sendCheckinReminder({ force = false } = {}) {
+  if (!force && !(await isCheckinDue())) return false;
+  logger.info('push.checkin_reminder', { forced: force });
+  await broadcast({ title: 'willow', body: CHECKIN_MESSAGE, url: CHECKIN_URL });
+  return true;
 }
 
 /**
@@ -135,29 +181,46 @@ function msUntilNext(hour, minute) {
 }
 
 /**
- * Start the self-rescheduling daily-reminder timer (called once at boot).
- * No-op when push is disabled or REMINDER_TIME is malformed.
+ * Run `job` every day at the given server-local time, self-rescheduling.
+ * @param {string} name log label
+ * @param {RegExpExecArray} match parsed "HH:MM"
+ * @param {() => Promise<unknown>} job
  */
-function scheduleDailyReminder() {
-  if (!PUSH_ENABLED || !REMINDER_MATCH) return;
-  const hour = Number(REMINDER_MATCH[1]);
-  const minute = Number(REMINDER_MATCH[2]);
+function scheduleDaily(name, match, job) {
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
 
   function scheduleNext() {
     // Recomputed on every firing (rather than a fixed 24h interval) so the
     // schedule self-corrects across DST changes and any clock drift.
     setTimeout(async () => {
       try {
-        await sendDailyReminders();
+        await job();
       } catch (err) {
-        logger.error('push.reminder_run_failed', { err: err.message });
+        logger.error('push.reminder_run_failed', { reminder: name, err: err.message });
       }
       scheduleNext();
     }, msUntilNext(hour, minute));
   }
 
   scheduleNext();
-  logger.info('push.reminder_scheduled', { reminderTime: REMINDER_TIME });
+}
+
+/**
+ * Start the self-rescheduling reminder timers (called once at boot): the
+ * evening gratitude prompt and the morning check-in check. No-op when push is
+ * disabled; each timer is skipped if its time is malformed.
+ */
+function scheduleDailyReminder() {
+  if (!PUSH_ENABLED) return;
+  if (REMINDER_MATCH) {
+    scheduleDaily('gratitude', REMINDER_MATCH, sendDailyReminders);
+    logger.info('push.reminder_scheduled', { reminderTime: REMINDER_TIME });
+  }
+  if (CHECKIN_REMINDER_MATCH) {
+    scheduleDaily('checkin', CHECKIN_REMINDER_MATCH, sendCheckinReminder);
+    logger.info('push.checkin_reminder_scheduled', { reminderTime: CHECKIN_REMINDER_TIME });
+  }
 }
 
 module.exports = {
@@ -167,5 +230,7 @@ module.exports = {
   subscribe,
   unsubscribe,
   sendDailyReminders,
+  sendCheckinReminder,
+  isCheckinDue,
   scheduleDailyReminder
 };
