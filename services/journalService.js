@@ -48,21 +48,21 @@ const FOLLOWUP_QUESTIONS = {
     'What expectation of yourself can you let go of?',
     'If 🐶 could see you right now, what would he want you to remember?',
     'What story are you telling yourself about this moment?',
-    'If you could observe your current pain from across the room, what would you notice about myself?',
+    'If you could observe your current pain from across the room, what would you notice about yourself?',
     'When you imagine the most accomplished "together" person you know, what struggles do you think they might have?',
     'What is something you judge harshly in yourself that you would not judge in someone else?',
   ],
   act_values: [
     'What discomfort or experience are you avoiding?',
-    'The feelings are difficult, can you let them sit and just observe?',
     'Which version of you would you rather be right now?',
     'What would acting on your values look like right now, even if it were hard?',
     'What can you make room for today, alongside difficult feelings?',
     'Is this a fact or a thought your mind is offering you?',
     'What do you notice right now if you pause and take a breath?',
-    'Can you hold this feeling a little more loosely, without pushing it away?',
-    'Can you thank your mind for that thought, and let it pass through?',
-    'Is there a value that felt most alive for you today?'
+    'Is there a value that felt most alive for you today?',
+    'What is one small step you could take today toward something that matters to you?',
+    "If this struggle weren't in the way, what would you want to be doing with your time?",
+    'What would the wiser, steadier part of you say about how to handle today?'
   ]
 };
 
@@ -76,7 +76,10 @@ const FOLLOWUP_STATEMENTS = [
   'You are driving a van with loud passengers: thoughts, feelings, memories, urges, and self-doubts. Keep driving toward the life that matters to you',
   'Notice, name, normalize then soothe: offer yourself kindness',
   'You are here. You are okay. You do not have to escape this.',
-  'Notice, accept, defuse, then move towards a value'
+  'Notice, accept, defuse, then move towards a value',
+  'The feelings are difficult, can you let them sit and just observe?',
+  'Can you hold this feeling a little more loosely, without pushing it away?',
+  'Can you thank your mind for that thought, and let it pass through?'
 ];
 
 const FOLLOWUP_THEMES = [...Object.keys(FOLLOWUP_QUESTIONS), 'statement'];
