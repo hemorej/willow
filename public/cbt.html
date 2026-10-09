@@ -445,6 +445,7 @@ function renderField(field) {
     slider.type = "range";
     slider.min = field.min;
     slider.max = field.max;
+    slider.step = 5;
     slider.value = state.answers[field.key] ?? field.default ?? 0;
     const valueEl = document.createElement("span");
     valueEl.className = "slider-value";
