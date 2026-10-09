@@ -111,7 +111,9 @@
   <script src="/nav.js"></script>
   <script>
     const INSTRUMENT = INSTRUMENTS[CURRENT_INSTRUMENT_ID];
-    const QUESTIONS = INSTRUMENT.questions;
+    // Shown order is shuffled per run (see presentationOrder); answers are keyed
+    // by question id so position never matters for storage or scoring.
+    const QUESTIONS = presentationOrder(INSTRUMENT.questions);
     let _csrfToken = null;
     async function getCsrfToken() {
       if (!_csrfToken) {
@@ -123,7 +125,7 @@
     }
 
     // Quiz state
-    const answers = new Array(QUESTIONS.length).fill(null); // index per Q
+    const answers = {}; // question id -> chosen answer index
     let current = 0;
     let noteStep = false;
 
@@ -163,12 +165,12 @@
         radio.name = `q-${current}`;
         radio.id = id;
         radio.value = String(i);
-        if (answers[current] === i) {
+        if (answers[QUESTIONS[current].id] === i) {
           radio.checked = true;
           label.classList.add('selected');
         }
         radio.addEventListener('change', () => {
-          answers[current] = i;
+          answers[QUESTIONS[current].id] = i;
           // refresh selected styles
           [...listEl.querySelectorAll('label')].forEach((l) => l.classList.remove('selected'));
           label.classList.add('selected');
@@ -186,7 +188,7 @@
       });
 
       backBtn.disabled = current === 0;
-      nextBtn.disabled = answers[current] === null;
+      nextBtn.disabled = answers[QUESTIONS[current].id] == null;
       nextBtn.textContent = 'Next';
 
       const pct = ((current) / QUESTIONS.length) * 100;
@@ -200,7 +202,7 @@
 
     nextBtn.addEventListener('click', async () => {
       if (noteStep) { await submit(); return; }
-      if (answers[current] === null) return;
+      if (answers[QUESTIONS[current].id] == null) return;
       if (current < QUESTIONS.length - 1) {
         current += 1;
         render();
@@ -215,11 +217,14 @@
 
       const noteText = document.getElementById('note-input').value.trim();
       const payload = {
-        answers: QUESTIONS.map((q, i) => {
-          const idx = answers[i];
+        // Stored in canonical item order (not shown order) so records stay comparable.
+        answers: INSTRUMENT.questions.map((q) => {
+          const idx = answers[q.id];
           const a = q.answers[idx];
           return {
-            questionIndex: i,
+            questionId: q.id,
+            questionIndex: q.canonicalIndex,
+            shownPosition: QUESTIONS.indexOf(q),
             questionTitle: q.title,
             answerIndex: idx,
             answerText: a.text,
@@ -252,7 +257,7 @@
       resCard.style.display = '';
       document.getElementById('result-score').textContent = String(totalScore);
       document.getElementById('result-max').textContent = String(INSTRUMENT.maxScore);
-      if (payload.answers[PHQ9X_SELF_HARM_INDEX].score > 0) {
+      if (payload.answers.some((a) => a.questionId === PHQ9X_SELF_HARM_ID && a.score > 0)) {
         document.getElementById('crisis-note').style.display = '';
       }
       const pill = document.getElementById('result-pill');

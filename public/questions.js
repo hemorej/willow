@@ -219,28 +219,59 @@ const PHQ9X_ANSWERS = [
   { score: 3, text: 'Nearly every day' }
 ];
 
-const PHQ9X_PROMPTS = [
-  'Little interest or pleasure in doing things',
-  'Feeling down, depressed or hopeless',
-  'Trouble falling or staying asleep, or sleeping too much',
-  'Feeling tired or having little energy',
-  'Poor appetite or overeating',
-  'Feeling bad about yourself \u2013 or that you are a failure or have let yourself or your family down',
-  'Trouble concentrating on things, such as reading the newspaper or watching television',
-  'Moving or speaking so slowly that other people could have noticed. Or the opposite \u2013 being so fidgety or restless that you have been moving around a lot more than usual',
-  'Thoughts that you would be better off dead, or of hurting yourself in some way',
+// Each item has a stable `id` (answers are stored and scored by id, never by
+// screen position) and a `group` used only to build the presentation order.
+// Canonical order below is the PHQ-9 order, then the extras.
+const PHQ9X_ITEMS = [
+  { id: 'interest',     group: 'core',  title: 'Little interest or pleasure in doing things' },
+  { id: 'mood',         group: 'core',  title: 'Feeling down, depressed or hopeless' },
+  { id: 'sleep',        group: 'core',  title: 'Trouble falling or staying asleep, or sleeping too much' },
+  { id: 'energy',       group: 'core',  title: 'Feeling tired or having little energy' },
+  { id: 'appetite',     group: 'core',  title: 'Poor appetite or overeating' },
+  { id: 'self_worth',   group: 'core',  title: 'Feeling bad about yourself \u2013 or that you are a failure or have let yourself or your family down' },
+  { id: 'concentration', group: 'core', title: 'Trouble concentrating on things, such as reading the newspaper or watching television' },
+  { id: 'psychomotor',  group: 'core',  title: 'Moving or speaking so slowly that other people could have noticed. Or the opposite \u2013 being so fidgety or restless that you have been moving around a lot more than usual' },
+  { id: 'self_harm',    group: 'last',  title: 'Thoughts that you would be better off dead, or of hurting yourself in some way' },
   // Extras (original wording, not from the BDI-II or PROMIS):
-  'Feeling hopeless or pessimistic about the future',
-  'Feeling helpless or stuck, as if nothing you do will help',
-  'Being harshly self-critical, or feeling worthless',
-  'Feeling irritable or having a short temper'
+  { id: 'outlook',      group: 'extra', title: 'Feeling hopeless or pessimistic about the future' },
+  { id: 'helplessness', group: 'extra', title: 'Feeling helpless or stuck, as if nothing you do will help' },
+  { id: 'self_critic',  group: 'extra', title: 'Being harshly self-critical, or feeling worthless' },
+  { id: 'irritability', group: 'extra', title: 'Feeling irritable or having a short temper' }
 ];
 
-// Index of the PHQ-9 suicidal-thoughts item; a non-zero answer triggers the
+// Id of the PHQ-9 suicidal-thoughts item; a non-zero answer triggers the
 // crisis-resources note on the result screen.
-const PHQ9X_SELF_HARM_INDEX = 8;
+const PHQ9X_SELF_HARM_ID = 'self_harm';
 
-const PHQ9X_QUESTIONS = PHQ9X_PROMPTS.map((title) => ({ title, answers: PHQ9X_ANSWERS }));
+// Canonical (stable) order: used for storage so saved records line up across
+// check-ins regardless of the order the items were shown in.
+const PHQ9X_QUESTIONS = PHQ9X_ITEMS.map((item, i) => ({
+  id: item.id,
+  group: item.group,
+  canonicalIndex: i,
+  title: item.title,
+  answers: PHQ9X_ANSWERS
+}));
+
+/** In-place Fisher-Yates shuffle; returns the array. */
+function shuffleInPlace(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/**
+ * Presentation order for one run of the check-in: the 8 core PHQ-9 items
+ * shuffled, then the 4 extras shuffled (kept together), then the suicidal-
+ * thoughts item last so it is never the opening question or buried mid-list.
+ * @param {Array<{group: string}>} questions
+ */
+function presentationOrder(questions) {
+  const pick = (g) => questions.filter((q) => q.group === g);
+  return [...shuffleInPlace(pick('core')), ...shuffleInPlace(pick('extra')), ...pick('last')];
+}
 
 // PHQ-9 cut-offs 5/10/15/20 scaled by 39/27 (max score 39) and rounded.
 const PHQ9X_BANDS = [
