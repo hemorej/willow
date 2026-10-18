@@ -1,0 +1,55 @@
+name: Deploy
+
+# Deploys on every push to main; no CI gate (nothing meaningful to test).
+on:
+  push:
+    branches: [main]
+
+jobs:
+  # Quick Deploy is off in Forge; this calls the site's Deployment Trigger URL,
+  # which just makes Forge deploy its configured branch. The URL lives in the
+  # `production` Environment (restricted to main), not in repo-level secrets.
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    permissions: {}
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
+    steps:
+      - name: Trigger Forge deployment
+        # forge_deploy_* are Forge's reserved params: they fill the Deployments
+        # table (otherwise N/A) and the FORGE_DEPLOY_* env vars in the deploy
+        # script. Values go through env, never interpolated into the shell.
+        env:
+          FORGE_DEPLOY_URL: ${{ secrets.FORGE_DEPLOY_URL }}
+          COMMIT_SHA: ${{ github.sha }}
+          COMMIT_AUTHOR: ${{ github.event.head_commit.author.name }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          curl -fsS --max-time 30 -G "$FORGE_DEPLOY_URL" \
+            --data-urlencode "forge_deploy_branch=main" \
+            --data-urlencode "forge_deploy_commit=$COMMIT_SHA" \
+            --data-urlencode "forge_deploy_author=$COMMIT_AUTHOR" \
+            --data-urlencode "forge_deploy_message=${COMMIT_MESSAGE%%$'\n'*}" \
+            > /dev/null
+
+      # The trigger returns as soon as Forge accepts the request; the deploy
+      # itself runs async. Give it time to finish, then require the site to
+      # answer 2xx (following redirects) so a failed restart turns this red.
+      # Only proves the site is up, not that the new commit is live.
+      - name: Verify site is up
+        env:
+          SITE_URL: https://willow.jerome-arfouche.ca/
+        run: |
+          sleep 60
+          for attempt in $(seq 1 12); do
+            if curl -fsSL --max-time 10 -o /dev/null "$SITE_URL"; then
+              echo "$SITE_URL is up (attempt $attempt)"
+              exit 0
+            fi
+            echo "attempt $attempt failed, retrying in 15s"
+            sleep 15
+          done
+          echo "::error::$SITE_URL did not respond with 2xx after deploy"
+          exit 1
