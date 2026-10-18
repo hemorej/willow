@@ -10,6 +10,13 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 5
     versioning-strategy: increase
+    # Merges to main trigger a deploy, so batch routine bumps into one PR.
+    # Major bumps stay individual.
+    groups:
+      npm-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
 
   # Keeps the SHA-pinned actions in .github/workflows/*.yml current.
   # Dependabot updates the pin and the trailing "# vX.Y.Z" comment
