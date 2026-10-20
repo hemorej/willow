@@ -35,15 +35,81 @@ jobs:
             > /dev/null
 
       # The trigger returns as soon as Forge accepts the request; the deploy
-      # itself runs async. Give it time to finish, then require the site to
-      # answer 2xx (following redirects) so a failed restart turns this red.
-      # Only proves the site is up, not that the new commit is live.
+      # itself runs async. Find the deployment for this commit through the
+      # Forge API and poll it until it reaches a terminal status, so a failed
+      # build or deploy script turns this red (with the Forge log printed).
+      # Forge may record the commit hash short or full, so match by prefix.
+      - name: Wait for Forge deployment
+        timeout-minutes: 5
+        env:
+          FORGE_API_TOKEN: ${{ secrets.FORGE_API_TOKEN }}
+          FORGE_ORG: ${{ secrets.FORGE_ORG }}
+          FORGE_SERVER_ID: ${{ secrets.FORGE_SERVER_ID }}
+          FORGE_SITE_ID: ${{ secrets.FORGE_SITE_ID }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          base="https://forge.laravel.com/api/orgs/$FORGE_ORG/servers/$FORGE_SERVER_ID/sites/$FORGE_SITE_ID/deployments"
+          api() {
+            curl -fsS --max-time 15 \
+              -H "Authorization: Bearer $FORGE_API_TOKEN" \
+              -H "Accept: application/json" "$@"
+          }
+
+          # Fail fast if Forge never shows a deployment for this commit (e.g.
+          # the hash isn't recorded), instead of waiting out the step timeout.
+          find_deadline=$((SECONDS + 120))
+          id=""
+          last=""
+          while true; do
+            if [ -z "$id" ]; then
+              recent=$(api -G "$base" \
+                --data-urlencode "sort=-created_at" \
+                --data-urlencode "page[size]=10") || recent=""
+              id=$(printf '%s' "$recent" \
+                | jq -r --arg sha "$COMMIT_SHA" '
+                    [.data[]
+                      | .attributes.commit.hash as $h
+                      | select($h != null and $h != ""
+                          and (($sha | startswith($h)) or ($h | startswith($sha))))
+                      | .id][0] // empty') || id=""
+              [ -n "$id" ] && echo "Forge deployment $id found for $COMMIT_SHA"
+              if [ -z "$id" ] && [ "$SECONDS" -ge "$find_deadline" ]; then
+                echo "Recent Forge commit hashes:"
+                printf '%s' "$recent" | jq -r '.data[].attributes.commit.hash' || true
+                echo "::error::No Forge deployment found for commit $COMMIT_SHA after 2 minutes"
+                exit 1
+              fi
+            fi
+
+            if [ -n "$id" ]; then
+              status=$(api "$base/$id" | jq -r '.data.attributes.status') || status=""
+              if [ "$status" != "$last" ] && [ -n "$status" ]; then
+                echo "status: $status"
+                last="$status"
+              fi
+              case "$status" in
+                finished)
+                  exit 0
+                  ;;
+                failed|failed-build|cancelled)
+                  echo "::group::Forge deployment output"
+                  api "$base/$id/log" | jq -r '.data.attributes.output' || true
+                  echo "::endgroup::"
+                  echo "::error::Forge deployment $id ended with status $status"
+                  exit 1
+                  ;;
+              esac
+            fi
+            sleep 5
+          done
+
+      # Final smoke test: require the site to answer 2xx (following
+      # redirects) once Forge reports the deploy finished.
       - name: Verify site is up
         env:
           SITE_URL: https://willow.jerome-arfouche.ca/
         run: |
-          sleep 60
-          for attempt in $(seq 1 12); do
+          for attempt in $(seq 1 6); do
             if curl -fsSL --max-time 10 -o /dev/null "$SITE_URL"; then
               echo "$SITE_URL is up (attempt $attempt)"
               exit 0
