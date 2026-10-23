@@ -213,8 +213,8 @@ importers:
         specifier: ^8.23.1
         version: 8.23.1
       tslog:
-        specifier: ^5.2.0
-        version: 5.2.0
+        specifier: ^5.4.0
+        version: 5.4.0
       web-push:
         specifier: ^3.6.7
         version: 3.6.7
@@ -767,8 +767,8 @@ packages:
     resolution: {integrity: sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA==}
     engines: {node: '>=0.6'}
 
-  tslog@5.2.0:
-    resolution: {integrity: sha512-bD0FpBIFZ1OInp7uzQmEn1SJe6feTkVTCudw/27ILuISbVZtTryXqauxyCWTa1I8ZgTm9OGQ6YrJPKM+6QTeJA==}
+  tslog@5.4.0:
+    resolution: {integrity: sha512-LXFfS+Fc6L6FxDswCwagpnb3crfby/UuQpTMh0uZKuMI9ppdFn6fd7wpPV4begwVarhOwzLdUNpjW/LTBc8nbA==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -1327,7 +1327,7 @@ snapshots:
 
   toidentifier@1.0.1: {}
 
-  tslog@5.2.0: {}
+  tslog@5.4.0: {}
 
   type-is@2.1.0:
     dependencies:
