@@ -16,7 +16,7 @@
 #          copy is a reference snapshot, refreshed on every run.
 #
 # Read-only on the server (only `cat` over SSH), all over a single multiplexed connection
-# (many separate logins can trip the server's fail2ban). Exit status is 1 if any "check"
+# (one login instead of one per file). Exit status is 1 if any "check"
 # file drifted or any file couldn't be read, 2 if the host can't be reached.
 # Override the host with INFRA_HOST.
 
