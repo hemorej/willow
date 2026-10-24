@@ -1,0 +1,10 @@
+# <check|pull>  <path on the server>  <path relative to infra/>   (see snapshot.sh)
+# check = this repo is the source of truth, applied to the server by hand / via the Forge UI.
+# pull  = Forge or the OS generates it; the local copy is a reference snapshot.
+
+check /etc/nginx/sites-available/willow.jerome-arfouche.ca  nginx.conf
+check /etc/supervisor/conf.d/daemon-910985.conf             supervisord.conf
+pull  /etc/nginx/forge-conf/3264110/site.conf                                         forge-conf/site.conf
+pull  /etc/nginx/forge-conf/3264110/willow.jerome-arfouche.ca/before/redirect.conf     forge-conf/before/redirect.conf
+pull  /etc/nginx/forge-conf/3264110/willow.jerome-arfouche.ca/before/ssl_redirect.conf forge-conf/before/ssl_redirect.conf
+pull  /etc/nginx/forge-conf/3264110/server/redirect_rules.conf                         forge-conf/server/redirect_rules.conf

@@ -130,9 +130,12 @@ willow/
 │   ├── rotate-key.js               # rewrap every encrypted row under a new key
 │   └── backfill-encrypt-journal.js # encrypt pre-encryption plaintext rows in place
 ├── infra/
+│   ├── README.md          # how production is set up (read this first)
 │   ├── forge_deploy.sh    # deployment script for Forge hosting
 │   ├── nginx.conf         # nginx reverse-proxy config (all traffic → Express)
-│   └── supervisord.conf   # process manager config
+│   ├── supervisord.conf   # process manager config
+│   ├── postgres.sql       # one-time role/database grants
+│   └── snapshot.sh        # compare the server's config with these files (manifest lists them)
 └── public/                # plain HTML/CSS/JS — login, index (journal), journal.html,
                            # quiz.html, results.html, cbt.html, shared JS modules, sw.js
 ```
