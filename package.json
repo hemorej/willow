@@ -24,7 +24,7 @@
         "express-session": "^1.19.0",
         "pg": "^8.23.1",
         "tslog": "^5.5.0",
-        "web-push": "^3.6.7"
+        "web-push": "^4.0.0"
     },
     "devDependencies": {
         "esbuild": "^0.28.2"
