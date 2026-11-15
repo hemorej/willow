@@ -11,6 +11,11 @@ allowBuilds:
 minimumReleaseAge: 4320
 # Exceptions for packages where we need to react fast (e.g. security
 # patches you've manually verified): add the package name here.
+minimumReleaseAgeExclude:
+  # 2.0.3 is the provenance-signed release (published via GitHub Actions);
+  # 2.0.2 lacks attestation and trips trustPolicy. Remove once 2.0.3 is past
+  # the release-age window (after 2026-11-15 18:15 UTC).
+  - encodeurl
 # minimumReleaseAgeExclude:
 #   - some-package
 
