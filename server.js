@@ -3,6 +3,8 @@
 // runs the schema bootstrap and arms the daily push reminder before listening.
 
 require('dotenv').config({ quiet: true });
+require('./instrument'); // Sentry; must load before express
+const Sentry = require('@sentry/node');
 
 const express = require('express');
 const path = require('path');
@@ -60,6 +62,9 @@ app.use(express.static(STATIC_DIR, {
 app.get('/login', (_req, res) => res.sendFile(path.join(STATIC_DIR, 'login.html')));
 
 app.use(routes);
+
+// After all routes; reports unhandled errors, then falls through to Express's default handler.
+Sentry.setupExpressErrorHandler(app);
 
 /** Bootstrap schema, arm the reminder scheduler, then start listening. */
 async function start() {
