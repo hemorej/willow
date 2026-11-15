@@ -25,7 +25,7 @@ everything specific to this app. Facts as of 2026-10-23.
 | `nginx.conf` | The vhost (`/etc/nginx/sites-available/willow.jerome-arfouche.ca`) | By hand; `./snapshot.sh` flags drift |
 | `supervisord.conf` | The Express daemon (`/etc/supervisor/conf.d/daemon-910985.conf`) | Created by Forge's *Daemons* page; `./snapshot.sh` flags drift |
 | `postgres.sql` | One-time role/database grants (run as `postgres`; set the password) | By hand |
-| `forge-conf/` | Forge-generated includes, read-only reference (see below) | Refreshed by `./snapshot.sh` |
+| `forge-conf/` | Forge-generated includes, read-only reference (see below) | Refreshed by `./snapshot.sh` — except `before/ssl_redirect.conf`, hand-edited to `include snippets/http-redirect.conf` (bot rules before the 80 → 443 redirect), so it is a `check` file: Forge may regenerate it, re-apply if `./snapshot.sh` shows DRIFT |
 | `env.example` | Names of the variables in the server-side `.env` | — |
 | `manifest`, `snapshot.sh` | What to compare with the server, and the script | `./snapshot.sh` |
 
