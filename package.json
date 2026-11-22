@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "Local journaling and depression self-check-in tracker",
     "main": "server.js",
-    "packageManager": "pnpm@12.6.0",
+    "packageManager": "pnpm@12.10.0",
     "scripts": {
         "dev": "brew services start postgresql@18; node server.js",
         "start": "node server.js",
