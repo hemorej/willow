@@ -528,6 +528,29 @@ body {
   justify-content: center;
 }
 
+/* Narrow viewports: pin the compose footer (Save entry) to the bottom of the
+   visible area so it stays reachable above the on-screen keyboard.
+   --keyboard-inset is set from the visualViewport API in index.html. */
+@media (max-width: 560px) {
+  .journal-footer {
+    position: sticky;
+    bottom: var(--keyboard-inset, 0px);
+    z-index: 5;
+    margin-top: 12px;
+    padding: 10px 0 calc(10px + env(safe-area-inset-bottom, 0px));
+    background: var(--bg);
+  }
+
+  /* With the keyboard up, the home-indicator inset sits under the keyboard. */
+  .journal-footer.keyboard-open {
+    padding-bottom: 10px;
+  }
+
+  .journal-textarea {
+    min-height: 30vh;
+  }
+}
+
 .followup-overlay {
   position: fixed;
   inset: 0;

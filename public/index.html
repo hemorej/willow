@@ -264,6 +264,32 @@
       saveBtn.disabled = !(draft.value.trim() || selectedMood !== null);
     }
 
+    // Narrow viewports: keep the sticky footer (Save entry) above the
+    // on-screen keyboard. iOS Safari doesn't shrink the layout viewport when
+    // the keyboard opens, so measure how much of it the keyboard covers.
+    (function keepFooterAboveKeyboard() {
+      const vv = window.visualViewport;
+      if (!vv) return;
+      const footer = document.querySelector('.journal-footer');
+      const narrow = window.matchMedia('(max-width: 560px)');
+      let raf = 0;
+      function update() {
+        raf = 0;
+        let inset = 0;
+        if (narrow.matches) {
+          const layoutH = document.documentElement.clientHeight;
+          inset = Math.max(0, Math.round(layoutH - (vv.offsetTop + vv.height)));
+        }
+        document.documentElement.style.setProperty('--keyboard-inset', inset + 'px');
+        footer.classList.toggle('keyboard-open', inset > 80);
+      }
+      function schedule() { if (!raf) raf = requestAnimationFrame(update); }
+      vv.addEventListener('resize', schedule);
+      vv.addEventListener('scroll', schedule);
+      narrow.addEventListener('change', schedule);
+      update();
+    })();
+
     // Reflective followup modal — either a question (self-compassion / ACT
     // values, answer captured) or a standalone statement (acknowledgment only,
     // no answer captured, never shown in the journal-log footnotes).
