@@ -304,6 +304,7 @@
       selectedMood = null;
       moodButtons.forEach(b => b.classList.remove('selected'));
       pendingFollowup = null;
+      clientKey = newClientKey();
       setSaving(false);
     });
 
@@ -390,6 +391,14 @@
     // in case the save fails and has to be retried.
     let pendingFollowup = null;
 
+    // Identifies this entry across retries, so the server stores it only once
+    // even if a save succeeds but its response is lost. (randomUUID would need
+    // a secure context; getRandomValues doesn't.)
+    function newClientKey() {
+      return Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
+    }
+    let clientKey = newClientKey();
+
     async function postJson(url, payload) {
       const res = await fetch(url, {
         method: 'POST',
@@ -429,7 +438,7 @@
 
       // Read the whole form now, before any waiting.
       const entry = {
-        date, text: text || null, mood: selectedMood, gratitude: gratitudeOn,
+        clientKey, date, text: text || null, mood: selectedMood, gratitude: gratitudeOn,
         gratitudeTag: gratitudeOn ? GRATITUDE_PROMPTS[gratIdx].tag : null,
       };
 

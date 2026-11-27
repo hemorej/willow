@@ -57,6 +57,11 @@ async function initDb() {
     ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS gratitude BOOLEAN NOT NULL DEFAULT false;
     ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS gratitude_tag TEXT;
 
+    -- Idempotency key from the compose form, so a retried save can't insert twice.
+    ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS client_key TEXT;
+    CREATE UNIQUE INDEX IF NOT EXISTS journal_entries_client_key_idx
+      ON journal_entries (client_key);
+
     CREATE TABLE IF NOT EXISTS journal_followups (
       id SERIAL PRIMARY KEY,
       shown_date DATE NOT NULL,
