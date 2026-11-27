@@ -126,29 +126,45 @@ async function createEntry(body) {
   const id = `journal-${order}-${crypto.randomBytes(4).toString('hex')}`;
   let record = { id, date, order, text: text || null, mood, gratitude, gratitudeTag };
 
-  // The unique index makes this atomic, even if both requests are in flight.
-  const { rowCount } = await pool.query(
-    `INSERT INTO journal_entries (id, entry_date, entry_order, mood, body, gratitude, gratitude_tag, data, client_key)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-     ON CONFLICT (client_key) DO NOTHING`,
-    [id, date, order, mood, journalCrypto.encryptText(text || null), gratitude, gratitudeTag, journalCrypto.encryptJSON(record), clientKey]
-  );
+  // One transaction, so a failed save never leaves the entry stored without
+  // its followup answer.
+  const client = await pool.connect();
+  let rollbackError;
+  try {
+    await client.query('BEGIN');
 
-  // A retry: keep the original id and order, but apply any edits made since.
-  if (!rowCount) {
-    const { rows } = await pool.query('SELECT id, entry_order FROM journal_entries WHERE client_key = $1', [clientKey]);
-    record = { ...record, id: rows[0].id, order: Number(rows[0].entry_order) };
-    await pool.query(
-      'UPDATE journal_entries SET entry_date = $1, mood = $2, body = $3, gratitude = $4, gratitude_tag = $5, data = $6 WHERE id = $7',
-      [date, mood, journalCrypto.encryptText(record.text), gratitude, gratitudeTag, journalCrypto.encryptJSON(record), record.id]
+    // The unique index makes this atomic, even if both requests are in flight.
+    const { rowCount } = await client.query(
+      `INSERT INTO journal_entries (id, entry_date, entry_order, mood, body, gratitude, gratitude_tag, data, client_key)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       ON CONFLICT (client_key) DO NOTHING`,
+      [id, date, order, mood, journalCrypto.encryptText(text || null), gratitude, gratitudeTag, journalCrypto.encryptJSON(record), clientKey]
     );
-  }
 
-  if (followupId !== null) {
-    await pool.query(
-      'UPDATE journal_followups SET entry_id = $1, answer = $2 WHERE id = $3 AND entry_id IS NULL',
-      [record.id, journalCrypto.encryptText(followupAnswer), followupId]
-    );
+    // A retry: keep the original id and order, but apply any edits made since.
+    if (!rowCount) {
+      const { rows } = await client.query('SELECT id, entry_order FROM journal_entries WHERE client_key = $1', [clientKey]);
+      record = { ...record, id: rows[0].id, order: Number(rows[0].entry_order) };
+      await client.query(
+        'UPDATE journal_entries SET entry_date = $1, mood = $2, body = $3, gratitude = $4, gratitude_tag = $5, data = $6 WHERE id = $7',
+        [date, mood, journalCrypto.encryptText(record.text), gratitude, gratitudeTag, journalCrypto.encryptJSON(record), record.id]
+      );
+    }
+
+    if (followupId !== null) {
+      await client.query(
+        'UPDATE journal_followups SET entry_id = $1, answer = $2 WHERE id = $3 AND entry_id IS NULL',
+        [record.id, journalCrypto.encryptText(followupAnswer), followupId]
+      );
+    }
+
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch((e) => { rollbackError = e; });
+    throw err;
+  } finally {
+    // A client that couldn't roll back is discarded rather than reused.
+    client.release(rollbackError);
   }
 
   return { entry: record };
