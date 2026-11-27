@@ -269,7 +269,10 @@
     // Narrow viewports show a compact Save beside the title instead of the
     // footer button; it just forwards to the footer button's handler.
     const saveBtnCompact = document.getElementById('save-btn-compact');
-    saveBtnCompact.addEventListener('click', () => saveBtn.click());
+    saveBtnCompact.addEventListener('click', () => {
+      saveBtn.click();
+      saveBtnCompact.disabled = saveBtn.disabled;
+    });
 
     function updateSaveState() {
       saveBtn.disabled = !(draft.value.trim() || selectedMood !== null);
@@ -294,10 +297,17 @@
           root.style.removeProperty('--app-top');
           return;
         }
-        if (Math.abs(vv.scale - 1) > 0.01) return; // leave pinch-zoom alone
+        const keyboardOpen = root.clientHeight - vv.height * vv.scale > 80;
+        root.classList.toggle('keyboard-open', keyboardOpen);
+        if (Math.abs(vv.scale - 1) > 0.01) {
+          if (!keyboardOpen) {
+            root.style.removeProperty('--app-height');
+            root.style.removeProperty('--app-top');
+          }
+          return; // leave pinch-zoom alone
+        }
         root.style.setProperty('--app-height', Math.round(vv.height) + 'px');
         root.style.setProperty('--app-top', Math.round(vv.offsetTop) + 'px');
-        root.classList.toggle('keyboard-open', root.clientHeight - vv.height > 80);
       }
       function schedule() { if (!raf) raf = requestAnimationFrame(update); }
       vv.addEventListener('resize', schedule);
