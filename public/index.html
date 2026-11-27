@@ -12,7 +12,7 @@
   <meta name="theme-color" content="#5f7d66" />
   <link rel="stylesheet" href="/style.css" />
 </head>
-<body>
+<body class="compose-page">
   <div class="container">
     <header class="top-bar">
       <a class="wordmark" href="/">
@@ -60,7 +60,13 @@
             <div class="gratitude-menu" id="gratitude-menu" hidden></div>
           </div>
         </div>
-        <h1 class="journal-greeting" id="greeting"></h1>
+        <div class="greeting-row">
+          <h1 class="journal-greeting" id="greeting"></h1>
+          <button type="button" class="btn save-compact-btn" id="save-btn-compact" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+            <span>Save</span>
+          </button>
+        </div>
 
         <textarea
           id="draft"
@@ -260,59 +266,53 @@
     const saveBtn = document.getElementById('save-btn');
     draft.addEventListener('input', updateSaveState);
 
+    // Narrow viewports show a compact Save beside the title instead of the
+    // footer button; it just forwards to the footer button's handler.
+    const saveBtnCompact = document.getElementById('save-btn-compact');
+    saveBtnCompact.addEventListener('click', () => {
+      saveBtn.click();
+      saveBtnCompact.disabled = saveBtn.disabled;
+    });
+
     function updateSaveState() {
       saveBtn.disabled = !(draft.value.trim() || selectedMood !== null);
+      saveBtnCompact.disabled = saveBtn.disabled;
     }
 
-    // Narrow viewports: keep the sticky footer (Save entry) above the
-    // on-screen keyboard. iOS Safari doesn't shrink the layout viewport when
-    // the keyboard opens, so measure how much of it the keyboard covers.
-    // While it's open, also size the writing area to end above the footer so
-    // the footer never hides the last lines of a long draft.
-    (function keepFooterAboveKeyboard() {
+    // Narrow viewports: pin the compose screen to the visible area so the
+    // title and Save stay on screen with the keyboard up, and the page itself
+    // never scrolls (only the writing area does). iOS Safari doesn't shrink
+    // the layout viewport for the keyboard, so size from visualViewport.
+    (function fitComposeToVisibleArea() {
       const vv = window.visualViewport;
-      if (!vv) return;
-      const footer = document.querySelector('.journal-footer');
+      if (!vv) return; // CSS falls back to 100dvh
       const narrow = window.matchMedia('(max-width: 560px)');
-      const draft = document.getElementById('draft');
       const root = document.documentElement;
       let raf = 0;
-      let fittedHeight = 0; // visible height the draft was last aligned to
       function update() {
         raf = 0;
-        let inset = 0;
-        let open = false;
-        if (narrow.matches) {
-          const layoutH = root.clientHeight;
-          inset = Math.max(0, Math.round(layoutH - (vv.offsetTop + vv.height)));
-          // Ignores offsetTop (the keyboard stays up while the view is panned)
-          // and pinch-zoom (which also shrinks the visual viewport).
-          open = layoutH - vv.height * vv.scale > 80;
-        }
-        root.style.setProperty('--keyboard-inset', inset + 'px');
-        root.classList.toggle('keyboard-open', open);
-
-        // Cleared only once the keyboard closes, not on blur: resizing as
-        // focus leaves would move Save entry out from under the tap.
-        if (!open) {
-          draft.classList.remove('fitted');
-          fittedHeight = 0;
+        if (!narrow.matches) {
+          root.classList.remove('keyboard-open');
+          root.style.removeProperty('--app-height');
+          root.style.removeProperty('--app-top');
           return;
         }
-        if (document.activeElement !== draft) return;
-        const height = Math.round(vv.height);
-        if (height === fittedHeight) return; // don't fight the user's scrolling
-        fittedHeight = height;
-        root.style.setProperty('--visible-height', height + 'px');
-        root.style.setProperty('--footer-height', footer.offsetHeight + 'px');
-        draft.classList.add('fitted');
-        draft.scrollIntoView({ block: 'start' });
+        const keyboardOpen = root.clientHeight - vv.height * vv.scale > 80;
+        root.classList.toggle('keyboard-open', keyboardOpen);
+        if (Math.abs(vv.scale - 1) > 0.01) {
+          if (!keyboardOpen) {
+            root.style.removeProperty('--app-height');
+            root.style.removeProperty('--app-top');
+          }
+          return; // leave pinch-zoom alone
+        }
+        root.style.setProperty('--app-height', Math.round(vv.height) + 'px');
+        root.style.setProperty('--app-top', Math.round(vv.offsetTop) + 'px');
       }
       function schedule() { if (!raf) raf = requestAnimationFrame(update); }
       vv.addEventListener('resize', schedule);
       vv.addEventListener('scroll', schedule);
       narrow.addEventListener('change', schedule);
-      draft.addEventListener('focus', schedule);
       update();
     })();
 
