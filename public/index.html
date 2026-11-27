@@ -267,26 +267,52 @@
     // Narrow viewports: keep the sticky footer (Save entry) above the
     // on-screen keyboard. iOS Safari doesn't shrink the layout viewport when
     // the keyboard opens, so measure how much of it the keyboard covers.
+    // While it's open, also size the writing area to end above the footer so
+    // the footer never hides the last lines of a long draft.
     (function keepFooterAboveKeyboard() {
       const vv = window.visualViewport;
       if (!vv) return;
       const footer = document.querySelector('.journal-footer');
       const narrow = window.matchMedia('(max-width: 560px)');
+      const draft = document.getElementById('draft');
+      const root = document.documentElement;
       let raf = 0;
+      let fittedHeight = 0; // visible height the draft was last aligned to
       function update() {
         raf = 0;
         let inset = 0;
+        let open = false;
         if (narrow.matches) {
-          const layoutH = document.documentElement.clientHeight;
+          const layoutH = root.clientHeight;
           inset = Math.max(0, Math.round(layoutH - (vv.offsetTop + vv.height)));
+          // Ignores offsetTop (the keyboard stays up while the view is panned)
+          // and pinch-zoom (which also shrinks the visual viewport).
+          open = layoutH - vv.height * vv.scale > 80;
         }
-        document.documentElement.style.setProperty('--keyboard-inset', inset + 'px');
-        footer.classList.toggle('keyboard-open', inset > 80);
+        root.style.setProperty('--keyboard-inset', inset + 'px');
+        root.classList.toggle('keyboard-open', open);
+
+        // Cleared only once the keyboard closes, not on blur: resizing as
+        // focus leaves would move Save entry out from under the tap.
+        if (!open) {
+          draft.classList.remove('fitted');
+          fittedHeight = 0;
+          return;
+        }
+        if (document.activeElement !== draft) return;
+        const height = Math.round(vv.height);
+        if (height === fittedHeight) return; // don't fight the user's scrolling
+        fittedHeight = height;
+        root.style.setProperty('--visible-height', height + 'px');
+        root.style.setProperty('--footer-height', footer.offsetHeight + 'px');
+        draft.classList.add('fitted');
+        draft.scrollIntoView({ block: 'start' });
       }
       function schedule() { if (!raf) raf = requestAnimationFrame(update); }
       vv.addEventListener('resize', schedule);
       vv.addEventListener('scroll', schedule);
       narrow.addEventListener('change', schedule);
+      draft.addEventListener('focus', schedule);
       update();
     })();
 

@@ -542,12 +542,24 @@ body {
   }
 
   /* With the keyboard up, the home-indicator inset sits under the keyboard. */
-  .journal-footer.keyboard-open {
+  .keyboard-open .journal-footer {
     padding-bottom: 10px;
   }
 
   .journal-textarea {
     min-height: 30vh;
+  }
+
+  /* Keyboard up: fit the writing area between the top of the visible area and
+     the footer (12px footer margin + 8px breathing room). */
+  .keyboard-open .journal-textarea.fitted {
+    min-height: 0;
+    height: max(86px, calc(var(--visible-height, 60vh) - var(--footer-height, 70px) - 20px));
+  }
+
+  /* Leaves enough scroll room to bring the writing area to the top. */
+  .keyboard-open .container {
+    padding-bottom: 100vh;
   }
 }
 
