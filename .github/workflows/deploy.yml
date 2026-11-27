@@ -1,5 +1,10 @@
 name: Deploy
 
+# Title runs as deploys instead of GitHub's default, the head commit message
+# ("Merge pull request #…"). Expressions have no substring(), so a short SHA
+# isn't possible here; run_number is used instead.
+run-name: "Deploy to production (#${{ github.run_number }})"
+
 # Deploys on every push to main; no CI gate (nothing meaningful to test).
 on:
   push:
@@ -10,6 +15,7 @@ jobs:
   # which just makes Forge deploy its configured branch. The URL lives in the
   # `production` Environment (restricted to main), not in repo-level secrets.
   deploy:
+    name: Deploy to production
     runs-on: ubuntu-latest
     environment: production
     permissions: {}
