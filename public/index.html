@@ -297,6 +297,9 @@
     window.addEventListener('pageshow', (e) => {
       if (!e.persisted || !saved) return;
       saved = false;
+      now.setTime(Date.now());
+      document.getElementById('date-eyebrow').textContent =
+        now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).toUpperCase();
       draft.value = '';
       selectedMood = null;
       moodButtons.forEach(b => b.classList.remove('selected'));
