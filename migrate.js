@@ -61,6 +61,8 @@ async function initDb() {
     ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS client_key TEXT;
     CREATE UNIQUE INDEX IF NOT EXISTS journal_entries_client_key_idx
       ON journal_entries (client_key);
+    -- Save attempt number, so a delayed older attempt can't overwrite a newer one.
+    ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS client_revision INTEGER NOT NULL DEFAULT 0;
 
     CREATE TABLE IF NOT EXISTS journal_followups (
       id SERIAL PRIMARY KEY,

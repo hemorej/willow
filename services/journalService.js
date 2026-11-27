@@ -95,10 +95,11 @@ function isValidDate(date) {
  * `followupId` is supplied, the matching (still-unanswered) followup row is
  * updated with the answer and linked to this entry.
  *
- * Idempotent per `clientKey`: repeating a key updates the entry it first
- * created (with the latest content) instead of inserting another.
+ * Idempotent per `clientKey`: repeating a key never inserts another entry. It
+ * updates the one first created, but only if `clientRevision` is newer than
+ * what's stored; otherwise the stored entry is returned unchanged.
  *
- * @param {object} body {text, mood 0-4, date, gratitude, gratitudeTag, followupId, followupAnswer, clientKey}
+ * @param {object} body {text, mood 0-4, date, gratitude, gratitudeTag, followupId, followupAnswer, clientKey, clientRevision}
  * @returns {Promise<{error: string} | {entry: object}>} `error` for validation failures.
  */
 async function createEntry(body) {
@@ -115,11 +116,15 @@ async function createEntry(body) {
     : null;
 
   const clientKey = body.clientKey ?? null;
+  const clientRevision = body.clientRevision ?? 0;
 
   if (!date) return { error: 'A valid date (YYYY-MM-DD) is required' };
   if (!text && mood === null) return { error: 'Write something or pick a mood' };
   if (clientKey !== null && !(typeof clientKey === 'string' && CLIENT_KEY.test(clientKey))) {
     return { error: 'Invalid clientKey' };
+  }
+  if (!Number.isInteger(clientRevision) || clientRevision < 0 || clientRevision > 2147483647) {
+    return { error: 'Invalid clientRevision' };
   }
 
   const order = Date.now();
@@ -135,20 +140,27 @@ async function createEntry(body) {
 
     // The unique index makes this atomic, even if both requests are in flight.
     const { rowCount } = await client.query(
-      `INSERT INTO journal_entries (id, entry_date, entry_order, mood, body, gratitude, gratitude_tag, data, client_key)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO journal_entries (id, entry_date, entry_order, mood, body, gratitude, gratitude_tag, data, client_key, client_revision)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        ON CONFLICT (client_key) DO NOTHING`,
-      [id, date, order, mood, journalCrypto.encryptText(text || null), gratitude, gratitudeTag, journalCrypto.encryptJSON(record), clientKey]
+      [id, date, order, mood, journalCrypto.encryptText(text || null), gratitude, gratitudeTag, journalCrypto.encryptJSON(record), clientKey, clientRevision]
     );
 
-    // A retry: keep the original id and order, but apply any edits made since.
+    // A repeat: keep the original id and order, and apply this attempt only if
+    // it is newer than the stored one (a delayed request can arrive after a retry).
     if (!rowCount) {
       const { rows } = await client.query('SELECT id, entry_order FROM journal_entries WHERE client_key = $1', [clientKey]);
       record = { ...record, id: rows[0].id, order: Number(rows[0].entry_order) };
-      await client.query(
-        'UPDATE journal_entries SET entry_date = $1, mood = $2, body = $3, gratitude = $4, gratitude_tag = $5, data = $6 WHERE id = $7',
-        [date, mood, journalCrypto.encryptText(record.text), gratitude, gratitudeTag, journalCrypto.encryptJSON(record), record.id]
+      const updated = await client.query(
+        `UPDATE journal_entries
+         SET entry_date = $1, mood = $2, body = $3, gratitude = $4, gratitude_tag = $5, data = $6, client_revision = $7
+         WHERE id = $8 AND client_revision < $7`,
+        [date, mood, journalCrypto.encryptText(record.text), gratitude, gratitudeTag, journalCrypto.encryptJSON(record), clientRevision, record.id]
       );
+      if (!updated.rowCount) {
+        const stored = await client.query('SELECT data FROM journal_entries WHERE id = $1', [record.id]);
+        record = journalCrypto.decryptJSON(stored.rows[0].data);
+      }
     }
 
     if (followupId !== null) {

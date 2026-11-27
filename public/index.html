@@ -398,6 +398,8 @@
       return Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
     }
     let clientKey = newClientKey();
+    // Goes up with every attempt, so the server can ignore one that arrives late.
+    let clientRevision = 0;
 
     async function postJson(url, payload) {
       const res = await fetch(url, {
@@ -438,7 +440,7 @@
 
       // Read the whole form now, before any waiting.
       const entry = {
-        clientKey, date, text: text || null, mood: selectedMood, gratitude: gratitudeOn,
+        clientKey, clientRevision: ++clientRevision, date, text: text || null, mood: selectedMood, gratitude: gratitudeOn,
         gratitudeTag: gratitudeOn ? GRATITUDE_PROMPTS[gratIdx].tag : null,
       };
 
