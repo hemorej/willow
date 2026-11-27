@@ -68,6 +68,8 @@
           </button>
         </div>
 
+        <p class="error journal-save-error" id="save-error" role="alert" hidden></p>
+
         <textarea
           id="draft"
           class="journal-textarea"
@@ -269,15 +271,42 @@
     // Narrow viewports show a compact Save beside the title instead of the
     // footer button; it just forwards to the footer button's handler.
     const saveBtnCompact = document.getElementById('save-btn-compact');
-    saveBtnCompact.addEventListener('click', () => {
-      saveBtn.click();
-      saveBtnCompact.disabled = saveBtn.disabled;
-    });
+    saveBtnCompact.addEventListener('click', () => saveBtn.click());
+
+    let isSaving = false;
+    let saved = false;
 
     function updateSaveState() {
-      saveBtn.disabled = !(draft.value.trim() || selectedMood !== null);
+      saveBtn.disabled = isSaving || !(draft.value.trim() || selectedMood !== null);
       saveBtnCompact.disabled = saveBtn.disabled;
     }
+
+    // Lock the form while a save is in flight, so nothing can start a second
+    // save or make edits that wouldn't be included in this one.
+    function setSaving(saving) {
+      isSaving = saving;
+      draft.readOnly = saving;
+      gratToggle.disabled = saving;
+      moodButtons.forEach(b => { b.disabled = saving; });
+      if (saving) closeGratitudeMenu();
+      updateSaveState();
+    }
+
+    // Back navigation can restore this page from cache as it was mid-save.
+    // That entry is already stored, so start with a blank form.
+    window.addEventListener('pageshow', (e) => {
+      if (!e.persisted || !saved) return;
+      saved = false;
+      now.setTime(Date.now());
+      document.getElementById('date-eyebrow').textContent =
+        now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).toUpperCase();
+      draft.value = '';
+      selectedMood = null;
+      moodButtons.forEach(b => b.classList.remove('selected'));
+      pendingFollowup = null;
+      clientKey = newClientKey();
+      setSaving(false);
+    });
 
     // Narrow viewports: pin the compose screen to the visible area so the
     // title and Save stay on screen with the keyboard up, and the page itself
@@ -357,48 +386,77 @@
       });
     }
 
+    const saveError = document.getElementById('save-error');
+    // A shown followup is only offered once a day, so hold on to its answer
+    // in case the save fails and has to be retried.
+    let pendingFollowup = null;
+
+    // Identifies this entry across retries, so the server stores it only once
+    // even if a save succeeds but its response is lost. (randomUUID would need
+    // a secure context; getRandomValues doesn't.)
+    function newClientKey() {
+      return Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
+    }
+    let clientKey = newClientKey();
+    // Goes up with every attempt, so the server can ignore one that arrives late.
+    let clientRevision = 0;
+
+    async function postJson(url, payload) {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': await getCsrfToken() },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        // The cached token is stale if the session changed; refetch next time.
+        if (res.status === 401 || res.status === 403) _csrfToken = null;
+        throw Object.assign(new Error(`${url} responded ${res.status}`), { status: res.status });
+      }
+      return res.json();
+    }
+
+    // The followup is optional: if the check fails, save the entry without it.
+    async function runFollowup(date) {
+      let check;
+      try {
+        check = await postJson('/api/journal/followup-check', { date });
+      } catch (e) {
+        console.error('followup check failed', e);
+        return;
+      }
+      if (!check.show) return;
+      const answer = await askFollowup(check.question, check.kind);
+      if (check.kind !== 'statement') pendingFollowup = { followupId: check.id, followupAnswer: answer };
+    }
+
     saveBtn.addEventListener('click', async () => {
       const text = draft.value.trim();
-      if (!text && selectedMood === null) return;
-      saveBtn.disabled = true;
+      if (isSaving || (!text && selectedMood === null)) return;
+      setSaving(true);
+      saveError.hidden = true;
 
       const pad = n => String(n).padStart(2, '0');
       const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 
-      const gratitudeTag = gratitudeOn ? GRATITUDE_PROMPTS[gratIdx].tag : null;
-
-      let followupId = null;
-      let followupAnswer = null;
+      // Read the whole form now, before any waiting.
+      const entry = {
+        clientKey, clientRevision: ++clientRevision, date, text: text || null, mood: selectedMood, gratitude: gratitudeOn,
+        gratitudeTag: gratitudeOn ? GRATITUDE_PROMPTS[gratIdx].tag : null,
+      };
 
       try {
-        if (!gratitudeOn) {
-          const csrfToken = await getCsrfToken();
-          const checkRes = await fetch('/api/journal/followup-check', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-            body: JSON.stringify({ date }),
-          });
-          const check = await checkRes.json();
-          if (check.show && check.kind === 'statement') {
-            await askFollowup(check.question, 'statement');
-          } else if (check.show) {
-            followupId = check.id;
-            followupAnswer = await askFollowup(check.question, 'question');
-          }
-        }
-
-        await fetch('/api/journal/entries', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': await getCsrfToken() },
-          body: JSON.stringify({
-            date, text: text || null, mood: selectedMood, gratitude: gratitudeOn, gratitudeTag,
-            followupId, followupAnswer,
-          }),
-        });
+        if (!entry.gratitude && !pendingFollowup) await runFollowup(date);
+        await postJson('/api/journal/entries', { ...entry, ...pendingFollowup });
+        saved = true;
+        location.href = '/journal.html';
       } catch (e) {
         console.error('save failed', e);
+        saveError.textContent = e.status === 401
+          ? 'You’ve been signed out. Sign in from another tab, then save again.'
+          : 'Your entry couldn’t be saved. It’s still here, so please try again.';
+        saveError.hidden = false;
+        setSaving(false);
       }
-      location.href = '/journal.html';
     });
   </script>
   <nav class="auth-bar"><a href="/api/logout">Sign out</a></nav>

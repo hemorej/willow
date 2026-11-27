@@ -8,6 +8,7 @@ const pool = require('../db');
 const journalCrypto = require('../lib/journal-crypto');
 
 const JOURNAL_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const CLIENT_KEY = /^[0-9a-f]{32}$/;
 
 // Kept in sync with public/gratitude.js — used to validate that a saved
 // gratitude tag actually corresponds to one of the rotating prompts.
@@ -94,7 +95,11 @@ function isValidDate(date) {
  * `followupId` is supplied, the matching (still-unanswered) followup row is
  * updated with the answer and linked to this entry.
  *
- * @param {object} body {text, mood 0-4, date, gratitude, gratitudeTag, followupId, followupAnswer}
+ * Idempotent per `clientKey`: repeating a key never inserts another entry. It
+ * updates the one first created, but only if `clientRevision` is newer than
+ * what's stored; otherwise the stored entry is returned unchanged.
+ *
+ * @param {object} body {text, mood 0-4, date, gratitude, gratitudeTag, followupId, followupAnswer, clientKey, clientRevision}
  * @returns {Promise<{error: string} | {entry: object}>} `error` for validation failures.
  */
 async function createEntry(body) {
@@ -110,23 +115,68 @@ async function createEntry(body) {
     ? body.followupAnswer.trim()
     : null;
 
+  const clientKey = body.clientKey ?? null;
+  const clientRevision = body.clientRevision ?? 0;
+
   if (!date) return { error: 'A valid date (YYYY-MM-DD) is required' };
   if (!text && mood === null) return { error: 'Write something or pick a mood' };
+  if (clientKey !== null && !(typeof clientKey === 'string' && CLIENT_KEY.test(clientKey))) {
+    return { error: 'Invalid clientKey' };
+  }
+  if (!Number.isInteger(clientRevision) || clientRevision < 0 || clientRevision > 2147483647) {
+    return { error: 'Invalid clientRevision' };
+  }
 
   const order = Date.now();
   const id = `journal-${order}-${crypto.randomBytes(4).toString('hex')}`;
-  const record = { id, date, order, text: text || null, mood, gratitude, gratitudeTag };
+  let record = { id, date, order, text: text || null, mood, gratitude, gratitudeTag };
 
-  await pool.query(
-    'INSERT INTO journal_entries (id, entry_date, entry_order, mood, body, gratitude, gratitude_tag, data) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-    [id, date, order, mood, journalCrypto.encryptText(text || null), gratitude, gratitudeTag, journalCrypto.encryptJSON(record)]
-  );
+  // One transaction, so a failed save never leaves the entry stored without
+  // its followup answer.
+  const client = await pool.connect();
+  let rollbackError;
+  try {
+    await client.query('BEGIN');
 
-  if (followupId !== null) {
-    await pool.query(
-      'UPDATE journal_followups SET entry_id = $1, answer = $2 WHERE id = $3 AND entry_id IS NULL',
-      [id, journalCrypto.encryptText(followupAnswer), followupId]
+    // The unique index makes this atomic, even if both requests are in flight.
+    const { rowCount } = await client.query(
+      `INSERT INTO journal_entries (id, entry_date, entry_order, mood, body, gratitude, gratitude_tag, data, client_key, client_revision)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       ON CONFLICT (client_key) DO NOTHING`,
+      [id, date, order, mood, journalCrypto.encryptText(text || null), gratitude, gratitudeTag, journalCrypto.encryptJSON(record), clientKey, clientRevision]
     );
+
+    // A repeat: keep the original id and order, and apply this attempt only if
+    // it is newer than the stored one (a delayed request can arrive after a retry).
+    if (!rowCount) {
+      const { rows } = await client.query('SELECT id, entry_order FROM journal_entries WHERE client_key = $1', [clientKey]);
+      record = { ...record, id: rows[0].id, order: Number(rows[0].entry_order) };
+      const updated = await client.query(
+        `UPDATE journal_entries
+         SET entry_date = $1, mood = $2, body = $3, gratitude = $4, gratitude_tag = $5, data = $6, client_revision = $7
+         WHERE id = $8 AND client_revision < $7`,
+        [date, mood, journalCrypto.encryptText(record.text), gratitude, gratitudeTag, journalCrypto.encryptJSON(record), clientRevision, record.id]
+      );
+      if (!updated.rowCount) {
+        const stored = await client.query('SELECT data FROM journal_entries WHERE id = $1', [record.id]);
+        record = journalCrypto.decryptJSON(stored.rows[0].data);
+      }
+    }
+
+    if (followupId !== null) {
+      await client.query(
+        'UPDATE journal_followups SET entry_id = $1, answer = $2 WHERE id = $3 AND entry_id IS NULL',
+        [record.id, journalCrypto.encryptText(followupAnswer), followupId]
+      );
+    }
+
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch((e) => { rollbackError = e; });
+    throw err;
+  } finally {
+    // A client that couldn't roll back is discarded rather than reused.
+    client.release(rollbackError);
   }
 
   return { entry: record };

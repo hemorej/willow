@@ -528,6 +528,11 @@ body {
   justify-content: center;
 }
 
+.journal-save-error {
+  flex-shrink: 0;
+  margin: 0 0 12px;
+}
+
 /* Compact Save beside the title: narrow viewports only (see below). */
 .journal-home .save-compact-btn {
   display: none;
