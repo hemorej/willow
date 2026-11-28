@@ -4,6 +4,7 @@
  * Usage: DATABASE_URL=... node scripts/create-user.js
  */
 
+require('dotenv').config({ quiet: true });
 const readline = require('readline');
 const bcrypt = require('bcryptjs');
 const pool = require('../db');

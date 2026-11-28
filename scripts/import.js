@@ -6,6 +6,7 @@
  * Safe to re-run — uses ON CONFLICT DO NOTHING.
  */
 
+require('dotenv').config({ quiet: true });
 const fs = require('fs');
 const path = require('path');
 const pool = require('../db');
@@ -83,6 +84,9 @@ async function importCbt() {
 
 async function main() {
   console.log('Connecting to:', process.env.DATABASE_URL || 'postgres://localhost/bdi2');
+  if (!journalCrypto.ENCRYPTION_ENABLED) {
+    console.warn('JOURNAL_ENC_KEY is not set: records will be imported in plaintext.');
+  }
   await initDb();
   await importBdi();
   await importCbt();

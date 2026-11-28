@@ -7,6 +7,7 @@
  * Usage: DATABASE_URL=... JOURNAL_ENC_KEY=... node scripts/backfill-encrypt.js
  */
 
+require('dotenv').config({ quiet: true });
 const pool = require('../db');
 const { initDb } = require('../migrate');
 const journalCrypto = require('../lib/journal-crypto');

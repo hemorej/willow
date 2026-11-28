@@ -15,6 +15,7 @@
  * JOURNAL_ENC_KEY_PREV(_VERSION) from the environment and destroy the old key.
  */
 
+require('dotenv').config({ quiet: true });
 const pool = require('../db');
 const { initDb } = require('../migrate');
 const journalCrypto = require('../lib/journal-crypto');
