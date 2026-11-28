@@ -10,6 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const pool = require('../db');
 const { initDb } = require('../migrate');
+const journalCrypto = require('../lib/journal-crypto');
 
 const RESULTS_DIR = path.join(__dirname, '..', 'results');
 const CBT_DIR = path.join(RESULTS_DIR, 'cbt');
@@ -32,7 +33,14 @@ async function importBdi() {
         `INSERT INTO assessment_results (id, taken_at, total_score, severity, note, data)
          VALUES ($1, $2, $3, $4, $5, $6)
          ON CONFLICT (id) DO NOTHING`,
-        [id, record.takenAt, record.totalScore, record.severity || null, record.note || null, record]
+        [
+          id,
+          record.takenAt,
+          journalCrypto.ENCRYPTION_ENABLED ? null : record.totalScore,
+          journalCrypto.encryptText(record.severity || null),
+          journalCrypto.encryptText(record.note || null),
+          journalCrypto.encryptJSON(record)
+        ]
       );
       rowCount ? imported++ : skipped++;
     } catch (err) {
@@ -62,7 +70,7 @@ async function importCbt() {
         `INSERT INTO cbt_entries (filename, saved_at, data)
          VALUES ($1, $2, $3)
          ON CONFLICT (filename) DO NOTHING`,
-        [file, savedAt, record]
+        [file, savedAt, journalCrypto.encryptJSON(record)]
       );
       rowCount ? imported++ : skipped++;
     } catch (err) {

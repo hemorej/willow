@@ -5,6 +5,7 @@
 //   - `bdi2`:  archive — legacy BDI-II rows, read-only (never written here)
 
 const pool = require('../db');
+const journalCrypto = require('../lib/journal-crypto');
 
 const CURRENT_INSTRUMENT = 'phq9x';
 const PHQ9X_MAX_SCORE = 39;
@@ -39,7 +40,15 @@ async function createResult(body) {
   await pool.query(
     `INSERT INTO assessment_results (id, instrument, taken_at, total_score, severity, note, data)
      VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-    [id, CURRENT_INSTRUMENT, iso, totalScore, body.severity || null, body.note || null, record]
+    [
+      id,
+      CURRENT_INSTRUMENT,
+      iso,
+      journalCrypto.ENCRYPTION_ENABLED ? null : totalScore,
+      journalCrypto.encryptText(record.severity),
+      journalCrypto.encryptText(record.note),
+      journalCrypto.encryptJSON(record)
+    ]
   );
 
   return { id, totalScore };
@@ -52,15 +61,15 @@ async function createResult(body) {
  */
 async function listResults() {
   const { rows } = await pool.query(
-    'SELECT id, instrument, taken_at, total_score, severity, note FROM assessment_results ORDER BY taken_at DESC'
+    'SELECT id, instrument, taken_at, total_score, severity, note, data FROM assessment_results ORDER BY taken_at DESC'
   );
   return rows.map((r) => ({
     id: r.id,
     instrument: r.instrument,
     takenAt: r.taken_at,
-    totalScore: r.total_score,
-    severity: r.severity,
-    note: r.note
+    totalScore: r.total_score ?? journalCrypto.decryptJSON(r.data).totalScore,
+    severity: journalCrypto.decryptText(r.severity),
+    note: journalCrypto.decryptText(r.note)
   }));
 }
 
@@ -74,7 +83,7 @@ async function getResult(id) {
   if (!ASSESSMENT_SAFE_ID.test(id)) return { invalid: true };
   const { rows } = await pool.query('SELECT instrument, data FROM assessment_results WHERE id = $1', [id]);
   if (!rows.length) return { notFound: true };
-  return { data: { instrument: rows[0].instrument, ...rows[0].data } };
+  return { data: { instrument: rows[0].instrument, ...journalCrypto.decryptJSON(rows[0].data) } };
 }
 
 module.exports = { createResult, listResults, getResult, ASSESSMENT_SAFE_ID, CURRENT_INSTRUMENT };

@@ -43,8 +43,8 @@ everything specific to this app. Facts as of 2026-10-23.
 Schema creation runs on every start (`migrate.js`, idempotent), so there's no migrate step in the deploy.
 Changing a variable in `.env` needs `sudo supervisorctl restart daemon-910985:daemon-910985_00`.
 
-**Back up `.env` out of band.** The journal is encrypted with `JOURNAL_ENC_KEY` (and `…_PREV` during rotation);
-a Postgres restore without those keys leaves the journal unreadable. The droplet backups contain `.env`, but
+**Back up `.env` out of band.** The journal, check-ins and CBT records are encrypted with
+`JOURNAL_ENC_KEY` (and `…_PREV` during rotation); a Postgres restore without those keys leaves them unreadable. The droplet backups contain `.env`, but
 nothing else does.
 
 ## Deploy

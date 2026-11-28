@@ -12,7 +12,7 @@
         "create-user": "node scripts/create-user.js",
         "import": "node scripts/import.js",
         "import-history": "node scripts/import-history.js",
-        "backfill-encrypt-journal": "node scripts/backfill-encrypt-journal.js",
+        "backfill-encrypt": "node scripts/backfill-encrypt.js",
         "rotate-key": "node scripts/rotate-key.js"
     },
     "dependencies": {
