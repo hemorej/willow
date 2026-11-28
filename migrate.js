@@ -34,6 +34,9 @@ async function initDb() {
     -- Existing rows are BDI-II; new check-ins are written as 'phq9x'.
     ALTER TABLE assessment_results ADD COLUMN IF NOT EXISTS instrument TEXT NOT NULL DEFAULT 'bdi2';
 
+    -- Left NULL when encryption is on: the score then lives only inside data.
+    ALTER TABLE assessment_results ALTER COLUMN total_score DROP NOT NULL;
+
     CREATE TABLE IF NOT EXISTS cbt_entries (
       id SERIAL PRIMARY KEY,
       filename TEXT UNIQUE NOT NULL,

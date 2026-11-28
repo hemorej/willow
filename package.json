@@ -12,7 +12,7 @@
         "create-user": "node scripts/create-user.js",
         "import": "node scripts/import.js",
         "import-history": "node scripts/import-history.js",
-        "backfill-encrypt-journal": "node scripts/backfill-encrypt-journal.js",
+        "backfill-encrypt": "node scripts/backfill-encrypt.js",
         "rotate-key": "node scripts/rotate-key.js"
     },
     "dependencies": {
@@ -23,6 +23,7 @@
         "express": "^5.3.0",
         "express-rate-limit": "^8.7.5",
         "express-session": "^1.19.0",
+        "helmet": "^8.3.0",
         "pg": "^8.23.1",
         "tslog": "^5.5.0",
         "web-push": "^4.0.0"

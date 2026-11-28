@@ -5,7 +5,7 @@ const { getLogger } = require('../lib/logger');
 const logger = getLogger('auth');
 
 /**
- * POST /api/login — form post. On success sets `req.session.userId`, seeds a
+ * POST /api/login — form post. On success regenerates the session, sets `req.session.userId`, seeds a
  * CSRF token, and redirects to the sanitised `next` param (or `/`). Every
  * failure path redirects to `/login?error=1` with no detail.
  */
@@ -18,6 +18,8 @@ async function login(req, res) {
       logger.warn('auth.login_failed', { requestId: req.id, username });
       return res.redirect('/login?error=1');
     }
+    // A fresh session id, so one issued before login can't be reused (fixation).
+    await new Promise((resolve, reject) => req.session.regenerate((err) => (err ? reject(err) : resolve())));
     req.session.userId = userId;
     ensureCsrfToken(req); // pre-generate token so it's ready for post-login XHR
     logger.info('auth.login_succeeded', { requestId: req.id, userId });

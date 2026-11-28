@@ -6,10 +6,12 @@
  * Safe to re-run — uses ON CONFLICT DO NOTHING.
  */
 
+require('dotenv').config({ quiet: true });
 const fs = require('fs');
 const path = require('path');
 const pool = require('../db');
 const { initDb } = require('../migrate');
+const journalCrypto = require('../lib/journal-crypto');
 
 const RESULTS_DIR = path.join(__dirname, '..', 'results');
 const CBT_DIR = path.join(RESULTS_DIR, 'cbt');
@@ -32,7 +34,14 @@ async function importBdi() {
         `INSERT INTO assessment_results (id, taken_at, total_score, severity, note, data)
          VALUES ($1, $2, $3, $4, $5, $6)
          ON CONFLICT (id) DO NOTHING`,
-        [id, record.takenAt, record.totalScore, record.severity || null, record.note || null, record]
+        [
+          id,
+          record.takenAt,
+          journalCrypto.ENCRYPTION_ENABLED ? null : record.totalScore,
+          journalCrypto.encryptText(record.severity || null),
+          journalCrypto.encryptText(record.note || null),
+          journalCrypto.encryptJSON(record)
+        ]
       );
       rowCount ? imported++ : skipped++;
     } catch (err) {
@@ -62,7 +71,7 @@ async function importCbt() {
         `INSERT INTO cbt_entries (filename, saved_at, data)
          VALUES ($1, $2, $3)
          ON CONFLICT (filename) DO NOTHING`,
-        [file, savedAt, record]
+        [file, savedAt, journalCrypto.encryptJSON(record)]
       );
       rowCount ? imported++ : skipped++;
     } catch (err) {
@@ -75,6 +84,9 @@ async function importCbt() {
 
 async function main() {
   console.log('Connecting to:', process.env.DATABASE_URL || 'postgres://localhost/bdi2');
+  if (!journalCrypto.ENCRYPTION_ENABLED) {
+    console.warn('JOURNAL_ENC_KEY is not set: records will be imported in plaintext.');
+  }
   await initDb();
   await importBdi();
   await importCbt();

@@ -8,7 +8,7 @@ A small, private journaling app with two secondary self-care tools:
 
 Data is stored in a PostgreSQL database. Access is protected by a login form.
 
-Journal entry text is encrypted at rest (AES-256-GCM) when `JOURNAL_ENC_KEY` is set. An optional daily Web Push reminder can nudge you to write, and a Thursday-morning reminder prompts a fortnightly check-in when you haven't done one in 10+ days.
+Journal entries, check-ins and CBT records are encrypted at rest (AES-256-GCM) when `JOURNAL_ENC_KEY` is set; run `pnpm run backfill-encrypt` once to encrypt existing rows. An optional daily Web Push reminder can nudge you to write, and a Thursday-morning reminder prompts a fortnightly check-in when you haven't done one in 10+ days.
 
 ## Stack
 
@@ -65,7 +65,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | `PORT` | No | HTTP port (default: 3000) |
 | `SENTRY_DSN` | No | Enables Sentry error reporting (errors only; no request context). Unset ⇒ off |
 | `LOG_LEVEL` | No | Minimum app log level (`silly`…`fatal`, default `info`) |
-| `JOURNAL_ENC_KEY` | No | 32-byte AES-256-GCM key, hex-encoded (64 hex chars). If unset, journal entry text is stored in plaintext. Generate with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. |
+| `JOURNAL_ENC_KEY` | No | 32-byte AES-256-GCM key, hex-encoded (64 hex chars). If unset, journal entries, check-ins and CBT records are stored in plaintext. Generate with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. |
 | `JOURNAL_ENC_KEY_VERSION` | No | Integer version tag for `JOURNAL_ENC_KEY` (default `1`). Bump when rotating to a new key. |
 | `JOURNAL_ENC_KEY_PREV` / `JOURNAL_ENC_KEY_PREV_VERSION` | No | Previous key/version, kept only during a rotation so old rows stay readable until `pnpm run rotate-key` has rewrapped them. |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | No | Web Push VAPID keypair + `mailto:` contact. All three required to enable the daily push reminder. Generate with `npx web-push generate-vapid-keys`. |
@@ -123,13 +123,14 @@ willow/
 ├── middleware/            # auth gate, CSRF, rate limits, request logging
 ├── lib/
 │   ├── logger.js          # tslog named sub-loggers
-│   └── journal-crypto.js  # AES-256-GCM envelope encryption for journal content
+│   ├── journal-crypto.js  # AES-256-GCM envelope encryption
+│   └── encrypt-rows.js    # bulk (re-)encryption for backfill and rotation
 ├── scripts/
 │   ├── build.js                    # esbuild pipeline: minifies JS/CSS, copies statics to dist/
 │   ├── create-user.js              # interactive CLI to create/update the login user
 │   ├── import.js / import-history.js  # one-time imports of legacy JSON into PostgreSQL
 │   ├── rotate-key.js               # rewrap every encrypted row under a new key
-│   └── backfill-encrypt-journal.js # encrypt pre-encryption plaintext rows in place
+│   └── backfill-encrypt.js         # encrypt pre-encryption plaintext rows in place
 ├── infra/
 │   ├── README.md          # how production is set up (read this first)
 │   ├── forge_deploy.sh    # deployment script for Forge hosting

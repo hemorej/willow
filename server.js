@@ -1,5 +1,5 @@
-// App entry point. Middleware order matters and is: body parsers → request log
-// → session → rate limit → auth gate → static files → API routes. `start()`
+// App entry point. Middleware order matters and is: security headers → body
+// parsers → request log → session → rate limit → auth gate → static files → API routes. `start()`
 // runs the schema bootstrap and arms the daily push reminder before listening.
 
 require('dotenv').config({ quiet: true });
@@ -16,6 +16,7 @@ const { PORT, STATIC_DIR, SESSION_SECRET } = require('./config/env');
 const { globalLimiter } = require('./middleware/rateLimit');
 const { requireAuth } = require('./middleware/auth');
 const { requestLog } = require('./middleware/requestLog');
+const { securityHeaders, noStore } = require('./middleware/securityHeaders');
 const routes = require('./routes');
 const { scheduleDailyReminder } = require('./services/pushService');
 const { getLogger } = require('./lib/logger');
@@ -27,6 +28,10 @@ app.disable('x-powered-by');
 
 // Trust the nginx reverse proxy so rate limiting uses the real client IP.
 app.set('trust proxy', 1);
+
+// First, so redirects, 401s and rate-limit responses carry these too.
+app.use(securityHeaders);
+app.use('/api', noStore);
 
 app.use(express.json({ limit: '256kb' }));
 app.use(express.urlencoded({ extended: false }));

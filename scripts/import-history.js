@@ -14,6 +14,7 @@
  * skips rows already imported.
  */
 
+require('dotenv').config({ quiet: true });
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -192,6 +193,9 @@ async function importJournalTxt(nextOrder) {
 
 async function main() {
   console.log('Connecting to:', process.env.DATABASE_URL || 'postgres://localhost/willow');
+  if (!journalCrypto.ENCRYPTION_ENABLED) {
+    console.warn('JOURNAL_ENC_KEY is not set: records will be imported in plaintext.');
+  }
   await initDb();
 
   const nextOrder = makeOrderAssigner();

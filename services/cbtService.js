@@ -3,6 +3,7 @@
 // now just the primary key of the cbt_entries row.
 
 const pool = require('../db');
+const journalCrypto = require('../lib/journal-crypto');
 
 // Guards the :filename route param before it hits a query.
 const CBT_SAFE_FILENAME = /^thought-record-[0-9A-Za-z\-]+\.json$/;
@@ -35,7 +36,7 @@ async function submit(body) {
 
   await pool.query(
     'INSERT INTO cbt_entries (filename, saved_at, data) VALUES ($1, $2, $3)',
-    [filename, record.savedAt, record]
+    [filename, record.savedAt, journalCrypto.encryptJSON(record)]
   );
 
   return { filename };
@@ -51,14 +52,17 @@ async function listEntries() {
   const { rows } = await pool.query(
     'SELECT filename, saved_at, data FROM cbt_entries ORDER BY saved_at DESC'
   );
-  return rows.map((r) => ({
-    filename: r.filename,
-    savedAt: r.saved_at,
-    datetime: r.data.datetime || null,
-    summary: cbtSummarize(r.data),
-    emotion: r.data.emotion || null,
-    emotionIntensity: typeof r.data.emotionIntensity === 'number' ? r.data.emotionIntensity : null
-  }));
+  return rows.map((r) => {
+    const data = journalCrypto.decryptJSON(r.data);
+    return {
+      filename: r.filename,
+      savedAt: r.saved_at,
+      datetime: data.datetime || null,
+      summary: cbtSummarize(data),
+      emotion: data.emotion || null,
+      emotionIntensity: typeof data.emotionIntensity === 'number' ? data.emotionIntensity : null
+    };
+  });
 }
 
 /**
@@ -71,7 +75,7 @@ async function getEntry(filename) {
   if (!CBT_SAFE_FILENAME.test(filename)) return { invalid: true };
   const { rows } = await pool.query('SELECT data FROM cbt_entries WHERE filename = $1', [filename]);
   if (!rows.length) return { notFound: true };
-  return { record: rows[0].data };
+  return { record: journalCrypto.decryptJSON(rows[0].data) };
 }
 
 module.exports = { submit, listEntries, getEntry, CBT_SAFE_FILENAME };
