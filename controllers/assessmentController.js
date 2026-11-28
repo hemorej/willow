@@ -9,6 +9,11 @@ async function submitResult(req, res) {
   if (!Array.isArray(body.answers)) {
     return res.status(400).json({ error: 'answers array is required' });
   }
+  // Checked here because the score column can't: it is NULL when encrypted.
+  const isValidScore = (a) => Number.isInteger(a?.score) && a.score >= 0 && a.score <= 3;
+  if (!body.answers.every(isValidScore)) {
+    return res.status(400).json({ error: 'each answer needs an integer score from 0 to 3' });
+  }
   try {
     const { id, totalScore } = await assessmentService.createResult(body);
     logger.info('assessment.result_saved', { requestId: req.id, resultId: id });
